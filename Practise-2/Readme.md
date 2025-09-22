@@ -5,8 +5,17 @@
 "Олена Шевченко"
 "Петро Іваненко"
 ```
+# Inclues
+```csv 
+#include <fstream>   // File input/output stream utilities (eg. ifstream file(path))
+#include <iostream>  // Console input/output stream utilities 
+#include <sstream>   // String stream utilities used for parsing text (eg. stringstream row(line))
+#include <string>    // std::string container
+#include <vector>    // std::vector container for dynamic arrays
+
+```
 ## Відкритання файлу
-``` С++ 
+``` cpp
  	ifstream file(path);
     if (!file.is_open()) {
         cerr << "Could not open file " << path << endl;
@@ -14,7 +23,7 @@
     }
 ```
 ## Читання файлу 
-``` С++ 
+``` cpp
 	vector<string> user_names(3);
 	....
 	string line;
@@ -35,14 +44,14 @@
  	}	
 ```
 ## Прохід по колонці яка містить vector значень
-``` С++ 
+``` cpp
 	stringstream ss(column_value);
     while (ss >> value) {
         // logic
     }
 ```
 ## Користні методи string
-``` С++ 
+``` cpp
 	sting = "algoritms"
 	- text.front() - повертає перший елемент (Поверне - 'a')
 	- text.back() - повертає останній елемент (Поверне - 's')
@@ -50,7 +59,7 @@
 	- stod - перетворює стрічку у double
 ```
 ## Ініціалізація vector
-``` С++ 
+``` cpp
 	std::vector<int> v1;        // порожній вектор
 	std::vector<int> v2{};      //  порожній  
 	std::vector<int> v3 = {};   // теж порожній
@@ -59,4 +68,14 @@
 	std::vector<int> v2 = {1, 2, 3, 4, 5};  // ініціалізація
 	std::vector<int> v2{10, 20, 30};
 	std::vector<int> v3(v2.begin(), v2.end()); // ініціалізація на основі іншого вектору
+```
+## Методи vector
+``` cpp
+	 - empty() - перевіряє чи є елементи у vector
+	 - size() - кількість елементів
+```
+## Форматування чисел
+``` cpp
+ 	double avg = average(student.grades);
+  	std::cout << std::fixed << std::setprecision(2) << avg;  // prints 79.33
 ```
