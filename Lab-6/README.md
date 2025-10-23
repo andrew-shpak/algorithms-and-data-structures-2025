@@ -115,7 +115,7 @@ void displayTop(vector<Student> students, int n, bool highest) {
 }
 
 int main() {
-    vector<Student> students = readCSV("../students.csv");
+    vector<Student> students = readCSV("students.csv");
 
     if (students.empty()) {
         cout << "Помилка: файл не знайдено\n";
@@ -129,11 +129,4 @@ int main() {
 
     return 0;
 }
-```
-
-## Компіляція та запуск
-
-```bash
-g++ -std=c++17 -Wall main.cpp -o main
-./main
 ```
