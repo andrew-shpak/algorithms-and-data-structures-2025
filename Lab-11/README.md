@@ -58,40 +58,18 @@ using namespace std;
 
 // Структура для представлення ребра
 struct Edge {
-    int to;     // вершина призначення
-    int weight; // вага ребра
-
-    Edge(int to, int weight) : to(to), weight(weight) {}
+    
 };
-
-// Псевдонім для графа
-using Graph = vector<vector<Edge>>;
-
-// Константа для нескінченності
-const int INF = numeric_limits<int>::max();
+ 
 
 // Структура для пріоритетної черги (відстань, вершина)
 struct State {
-    int dist;
-    int vertex;
-
-    State(int dist, int vertex) : dist(dist), vertex(vertex) {}
-
-    // Перевантаження оператора для мінімальної купи
-    bool operator>(const State& other) const {
-        return dist > other.dist;
-    }
+     
 };
 
 // Функція для виконання алгоритму Дейкстри
 vector<int> dijkstra(const Graph& graph, int start, vector<int>& parent) {
-    int n = graph.size();
-    vector<int> dist(n, INF);
-    parent.assign(n, -1);
-
-    // Ваш код тут
-
-    return dist;
+      
 }
 
 // Функція для відновлення та виведення шляху
@@ -227,19 +205,6 @@ int main() {
 2	3		0 -> 1 -> 2
 3	6		0 -> 1 -> 2 -> 3
 ```
-
-### Обмеження алгоритму Дейкстри
-
-> **Важливо:** Алгоритм Дейкстри працює **тільки з невід'ємними вагами ребер**. Для графів з від'ємними вагами використовуйте алгоритм Беллмана-Форда.
-
-### Застосування
-
-Алгоритм Дейкстри використовується в:
-- GPS-навігації для пошуку найкоротшого маршруту
-- Маршрутизації в комп'ютерних мережах
-- Плануванні шляхів у іграх
-- Оптимізації логістики та доставки
-
----
+ ---
 
 **Всього балів:** 10
