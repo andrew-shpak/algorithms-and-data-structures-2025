@@ -96,7 +96,6 @@ void printResults(int start, const vector<int>& dist, const vector<int>& parent)
 }
 
 int main() {
-    // Приклад 1: Граф з лекції
     // Граф:
     //       1
     //    /  |  \
