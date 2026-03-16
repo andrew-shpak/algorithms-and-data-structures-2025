@@ -385,9 +385,15 @@ string serialize(Node* root) {
     // Ваш код тут
 }
 
+// Допоміжна функція для десеріалізації
+Node* deserialize_helper(istringstream& stream) {
+    // Ваш код тут
+}
+
 // Відновлює дерево з рядка
 Node* deserialize(const string& data) {
-    // Ваш код тут
+    istringstream stream(data);
+    return deserialize_helper(stream);
 }
 
 int main() {
