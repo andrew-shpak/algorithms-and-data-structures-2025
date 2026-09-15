@@ -7,6 +7,9 @@
 2. [Мінімальна програма](#2-мінімальна-програма)
 3. [Типи даних, const, readonly, var](#3-типи-даних-const-readonly-var)
 4. [Умови, switch і pattern matching](#4-умови-switch-і-pattern-matching)
+   - [if/else, класичний switch, switch-вирази](#41-if--else-і-тернарний-оператор)
+   - [Види патернів: базові, property, позиційні, list](#44-базові-патерни-константа-тип-var-_-реляційні-логічні)
+   - [Практичні приклади, порядок гілок, типові помилки, вправи](#48-практичні-приклади)
 5. [Цикли та масиви](#5-цикли-та-масиви)
 6. [Методи: ref, out, in, необов'язкові параметри](#6-методи-ref-out-in-необовязкові-параметри)
 7. [Класи, record, struct, властивості, nullable](#7-класи-record-struct-властивості-nullable)
@@ -113,46 +116,801 @@ PI ≈ 3.1416
 ---
 
 ## 4. Умови, switch і pattern matching
-Калькулятор зі слайдів: у C# немає «провалювання» між `case` — кожна гілка закінчується `break`/`return`. Компактніше — **switch-вираз** з патернами.
+Розгалуження в C# схожі на C++, але суворіші: умова завжди має тип `bool`, «провалювання» між `case` заборонене, а **pattern matching** (патерни) дозволяє перевіряти не лише значення, а й **форму** даних — тип, властивості, елементи списку. Компілятор перевіряє патерни на повноту та недосяжні гілки.
+
+### 4.1. `if` / `else` і тернарний оператор
+- Умова — лише `bool`: `if (count)` не компілюється (CS0029), пишіть `if (count != 0)`.
+- `&&` і `||` обчислюються **з коротким замиканням**: права частина не виконується, якщо результат уже відомий.
+- `умова ? a : b` — **вираз** (повертає значення), обидві гілки мають зводитися до спільного типу.
 
 ```csharp
-// Рядок замість Console.ReadLine(), щоб приклад був відтворюваним
-string input = "3 + 5";                      // приклад вводу
-string[] parts = input.Split(' ');           // ["3", "+", "5"]
-double a = double.Parse(parts[0]);           // Parse кидає FormatException на поганих даних
+int temperature = 23;
+if (temperature < 0)
+{
+    Console.WriteLine("Мороз");
+}
+else if (temperature < 20)                                  // else if — лише ланцюжок вкладених if
+{
+    Console.WriteLine("Прохолодно");
+}
+else
+{
+    Console.WriteLine("Тепло");
+}
+int age = 17;
+string status = age >= 18 ? "повнолітній" : "неповнолітній"; // тернарний оператор — це вираз, а не оператор
+Console.WriteLine(status);
+string? nickname = null;
+Console.WriteLine(nickname is null ? "без ніку" : nickname.ToUpper()); // у гілці «інакше» компілятор знає, що nickname не null
+int x = 5, y = 0;
+if (y != 0 && x / y > 1)                                    // && — коротке замикання: ділення на 0 не виконується
+{
+    Console.WriteLine("не виконається");
+}
+Console.WriteLine("&& зупинився на першій хибній умові");
+// if (age) { }                                             // CS0029: int не перетворюється на bool, на відміну від C++
+if (int.TryParse("abc", out int n))                         // TryParse не кидає виняток: bool + результат через out
+{
+    Console.WriteLine(n);
+}
+else
+{
+    Console.WriteLine("Не число");
+}
+int count = 3;
+Console.WriteLine($"{count} {(count == 1 ? "файл" : "файли")}"); // тернарний у інтерполяції — у дужках
+```
+
+**Приклад запуску:**
+```
+Тепло
+неповнолітній
+без ніку
+&& зупинився на першій хибній умові
+Не число
+3 файли
+```
+
+### 4.2. Класичний `switch`-оператор
+- Кожна секція має завершуватися `break`, `return`, `continue`, `throw` або `goto` — інакше помилка **CS0163**.
+- Кілька міток поспіль без коду між ними (`case A: case B:`) — дозволено, це єдиний «законний» fall-through.
+- `goto case X` / `goto default` — явний перехід до іншої секції.
+- `case` приймає будь-який патерн, а `when` додає довільну умову (guard).
+
+```csharp
+// Калькулятор: рядок замість Console.ReadLine(), щоб приклад був відтворюваним
+string input = "3 + 5";
+string[] parts = input.Split(' ');                          // ["3", "+", "5"]
+double a = double.Parse(parts[0]);
 char op = parts[1][0];
 double b = double.Parse(parts[2]);
-// Класичний switch-оператор
 switch (op)
 {
-    case '+': Console.WriteLine(a + b); break;
-    case '/' when b == 0: Console.WriteLine("Помилка: ділення на 0"); break; // when — додаткова умова
-    case '/': Console.WriteLine(a / b); break;
-    default: Console.WriteLine("Невідомий оператор"); break;
+    case '+':
+        Console.WriteLine(a + b);
+        break;                                              // break обов'язковий: «провалювання» заборонене
+    case '-':
+        Console.WriteLine(a - b);
+        break;
+    case '/' when b == 0:                                   // when — додаткова умова (guard)
+        Console.WriteLine("Помилка: ділення на 0");
+        break;
+    case '/':
+        Console.WriteLine(a / b);
+        break;
+    default:                                                // default може стояти будь-де, але зазвичай — останнім
+        Console.WriteLine("Невідомий оператор");
+        break;
 }
-// switch-вираз: кожна гілка повертає значення
-string Sign(int x) => x switch
+// Кілька міток на одну секцію: порожні case «склеюються» — це єдиний дозволений fall-through
+foreach (DayOfWeek day in new[] { DayOfWeek.Saturday, DayOfWeek.Wednesday })
 {
-    > 0 => "Positive",                       // реляційний патерн
-    < 0 => "Negative",
-    _ => "Zero"                              // _ — будь-яке інше значення
-};
-Console.WriteLine($"{Sign(7)} {Sign(-2)} {Sign(0)}");
-// TryParse не кидає виняток: повертає bool і результат через out
-if (int.TryParse("abc", out int n)) Console.WriteLine(n);
-else Console.WriteLine("Не число");
-// Патерн типу + логічні патерни and/or/not
-object value = 42;
-if (value is int k and >= 10 and <= 99) Console.WriteLine($"Двозначне ціле: {k}");
+    switch (day)
+    {
+        case DayOfWeek.Saturday:
+        case DayOfWeek.Sunday:
+            Console.WriteLine($"{day}: вихідний");
+            break;
+        default:
+            Console.WriteLine($"{day}: робочий");
+            break;
+    }
+}
+// goto case — явний перехід до іншої мітки (свідомий «fall-through»)
+foreach (string level in new[] { "critical", "warning" })
+{
+    switch (level)
+    {
+        case "critical":
+            Console.Write("[SMS] ");
+            goto case "error";
+        case "error":
+            Console.Write("[email] ");
+            goto case "warning";
+        case "warning":
+            Console.WriteLine("[log]");
+            break;
+    }
+}
+// Патерни в case: тип + змінна + when
+object?[] values = [42, -7, "hi", null];
+foreach (object? v in values)
+{
+    switch (v)
+    {
+        case int number when number > 0:                    // змінна number видима лише в цій секції
+            Console.WriteLine($"додатне {number}");
+            break;
+        case int number:                                    // те саме ім'я в іншій секції — дозволено
+            Console.WriteLine($"недодатне {number}");
+            break;
+        case string s:
+            Console.WriteLine($"рядок \"{s}\"");
+            continue;                                       // секцію можна завершити й continue/return/throw
+        case null:
+            Console.WriteLine("null");
+            break;
+    }
+}
 ```
 
 **Приклад запуску:**
 ```
 8
-Positive Negative Zero
-Не число
-Двозначне ціле: 42
+Saturday: вихідний
+Wednesday: робочий
+[SMS] [email] [log]
+[log]
+додатне 42
+недодатне -7
+рядок "hi"
+null
 ```
+
+Типова помилка з C++ — забутий `break`:
+
+```csharp
+// НЕ КОМПІЛЮЄТЬСЯ: CS0163 Control cannot fall through from one case label ('case 1:') to another
+int x = 1;
+switch (x)
+{
+    case 1:
+        Console.WriteLine("один");
+    case 2:
+        Console.WriteLine("два");
+        break;
+}
+```
+
+### 4.3. `switch`-вирази
+`значення switch { патерн => результат, ... }` — вираз, що **повертає** значення. Порівняно з оператором: немає `case`/`break`, гілки розділяються комами, `_` замінює `default`, у гілці можна кинути виняток через throw-вираз.
+
+- Якщо гілки покривають не всі значення — попередження **CS8509** (або **CS8846**, якщо «дірку» може закрити лише `when`), а під час виконання — `SwitchExpressionException`.
+- Для `enum` потрібна гілка `_` навіть якщо перелічені всі імена: `(DayOfWeek)42` — теж валідне значення (CS8524).
+
+```csharp
+using System.Runtime.CompilerServices;                     // SwitchExpressionException
+Console.WriteLine($"{Sign(7)} {Sign(-2)} {Sign(0)}");
+Console.WriteLine($"{DayKind(DayOfWeek.Sunday)}, {DayKind(DayOfWeek.Monday)}");
+Console.WriteLine(ParseColor("GREEN"));
+try
+{
+    Console.WriteLine(ParseColor("purple"));
+}
+catch (ArgumentException e)
+{
+    Console.WriteLine(e.Message);
+}
+// Неповний switch-вираз: попередження CS8509, а під час виконання — SwitchExpressionException
+int code = 3;
+try
+{
+#pragma warning disable CS8509                              // вимикаємо лише для демонстрації
+    string word = code switch
+    {
+        1 => "один",
+        2 => "два"
+    };
+#pragma warning restore CS8509
+    Console.WriteLine(word);
+}
+catch (SwitchExpressionException e)
+{
+    Console.WriteLine($"{e.GetType().Name}: {e.UnmatchedValue}");
+}
+
+static string Sign(int x) => x switch                       // switch-вираз: значення => результат
+{
+    > 0 => "Positive",                                      // гілки розділяються комами
+    < 0 => "Negative",
+    _ => "Zero"                                             // _ (discard) — будь-яке інше значення
+};
+static string DayKind(DayOfWeek day) => day switch
+{
+    DayOfWeek.Saturday or DayOfWeek.Sunday => "вихідний",   // or замість кількох case-міток
+    _ => "робочий"
+};
+static ConsoleColor ParseColor(string name) => name.ToLowerInvariant() switch
+{
+    "red" => ConsoleColor.Red,
+    "green" => ConsoleColor.Green,
+    _ => throw new ArgumentException($"Невідомий колір: {name}", nameof(name)) // throw-вираз у гілці
+};
+```
+
+**Приклад запуску:**
+```
+Positive Negative Zero
+вихідний, робочий
+Green
+Невідомий колір: purple (Parameter 'name')
+SwitchExpressionException: 3
+```
+
+### 4.4. Базові патерни: константа, тип, `var`, `_`, реляційні, логічні
+| Патерн | Приклад | Збігається, якщо |
+|--------|---------|------------------|
+| Константний | `null`, `0`, `"red"`, `Color.Red` | значення дорівнює константі |
+| Тип | `int`, `string` | значення має цей тип (і не `null`) |
+| Declaration | `int n`, `string s` | тип збігся → значення в нову змінну |
+| `var` | `var x` | **завжди** (навіть `null`), захоплює значення |
+| Discard | `_` | завжди, значення не потрібне |
+| Реляційний | `> 0`, `<= 'z'` | порівняння з **константою** |
+| Логічні | `and`, `or`, `not` | комбінація патернів (`not` > `and` > `or` за пріоритетом) |
+| Дужки | `(> 0 and < 10) or 100` | групування |
+
+`x is null` / `x is not null` — рекомендована перевірка на `null`: на відміну від `==`, її не можна «зламати» перевантаженим оператором.
+
+```csharp
+object?[] things = [null, 0, 7, 42, 13, "", "привіт", 'Q', '9', true, 2.5m];
+foreach (object? t in things)
+{
+    Console.WriteLine($"{t ?? "null",-7} → {Classify(t)}");
+}
+object value = 42;
+if (value is int k and >= 10 and <= 99)                     // тип + реляційні + логічний and
+{
+    Console.WriteLine($"Двозначне ціле: {k}");
+}
+Console.WriteLine(IsVowel('е') ? "голосна" : "приголосна");
+Console.WriteLine(Twice("5"));
+Console.WriteLine(Twice(5));
+
+static string Classify(object? o) => o switch
+{
+    null => "null",                                         // константний патерн
+    0 => "нуль",                                            // константа: o is int і дорівнює 0
+    int n and (> 0 and < 10) => $"цифра {n}",               // declaration + логічний + дужки
+    int n when n % 2 == 0 => $"парне int {n}",              // declaration + when
+    int => "непарне int",                                   // type-патерн без змінної
+    string { Length: 0 } => "порожній рядок",               // тип + property-патерн
+    string s => $"рядок довжини {s.Length}",
+    char c and (>= 'a' and <= 'z' or >= 'A' and <= 'Z') => $"латинська літера {c}",
+    bool => "bool",
+    var other => $"щось інше: {other.GetType().Name}"       // var-патерн: збігається завжди (і з null)
+};
+static bool IsVowel(char c) => c is 'а' or 'е' or 'є' or 'и' or 'і' or 'ї' or 'о' or 'у' or 'ю' or 'я'; // коротше за 10 порівнянь через ||
+static int Twice(object o)
+{
+    if (o is not int number)                                // not: змінна призначена, коли умова хибна
+    {
+        return -1;
+    }
+    return number * 2;                                      // тут number гарантовано ініціалізований
+}
+```
+
+**Приклад запуску:**
+```
+null    → null
+0       → нуль
+7       → цифра 7
+42      → парне int 42
+13      → непарне int
+        → порожній рядок
+привіт  → рядок довжини 6
+Q       → латинська літера Q
+9       → щось інше: Char
+True    → bool
+2.5     → щось інше: Decimal
+Двозначне ціле: 42
+голосна
+-1
+10
+```
+
+### 4.5. Property-патерни
+`{ Властивість: патерн, ... }` перевіряє властивості об'єкта (і неявно — що він не `null`). Патерни вкладаються: `{ Address: { City: "Київ" } }` або коротше — **extended property pattern** `{ Address.City: "Київ" }` (C# 10). Порожній `{ }` означає «будь-що, крім `null`».
+
+```csharp
+Person[] people =
+[
+    new("Олена", 19, new Address("Київ", "Хрещатик")),
+    new("Андрій", 34, new Address("Львів", "Ринок")),
+    new("Ірина", 70, null),
+    new("Тарас", 15, new Address("Київ", "Лесі Українки")),
+    new("Марко", 65, new Address("Одеса", "Дерибасівська"))
+];
+foreach (Person p in people)
+{
+    Console.WriteLine($"{p.Name}: {Describe(p)}");
+}
+if (people[1].Address is { } address)                       // { } — «не null» + змінна
+{
+    Console.WriteLine($"Адреса Андрія: {address.City}, {address.Street}");
+}
+string word = "патерн";
+Console.WriteLine(word is { Length: > 3 and < 10 } ? "середнє слово" : "інше");
+
+static string Describe(Person p) => p switch
+{
+    { Address: null } => "адреса невідома",
+    { Age: < 18, Address.City: "Київ" } => "неповнолітній киянин",   // extended property pattern (C# 10)
+    { Address: { City: "Київ" } } => "киянин",                     // вкладена форма того самого
+    { Age: >= 18 and < 60, Address.City: var city } => $"працездатний, місто {city}", // var захоплює значення
+    { Name: [var initial, ..], Age: >= 60 } => $"пенсіонер, ініціал {initial}", // property + list-патерн
+    _ => "інше"
+};
+public record Address(string City, string Street);
+public record Person(string Name, int Age, Address? Address);
+```
+
+**Приклад запуску:**
+```
+Олена: киянин
+Андрій: працездатний, місто Львів
+Ірина: адреса невідома
+Тарас: неповнолітній киянин
+Марко: пенсіонер, ініціал М
+Адреса Андрія: Львів, Ринок
+середнє слово
+```
+
+### 4.6. Позиційні та кортежні патерни
+**Позиційний** патерн `(a, b)` викликає `Deconstruct`: `record` генерує його автоматично, для звичайного класу — пишемо самі. **Кортежний** патерн перемикається одразу за кількома значеннями: `(a, b) switch { ... }` — ідеально для таблиць рішень і скінченних автоматів.
+
+```csharp
+Point[] points = [new(0, 0), new(5, 0), new(2, 3), new(-1, 4), new(-2, -2), new(3, -1)];
+Console.WriteLine(string.Join("; ", points.Select(Quadrant)));
+Fraction[] fractions = [new(0, 5), new(6, 3), new(1, 0), new(3, 4)];
+Console.WriteLine(string.Join("; ", fractions.Select(DescribeFraction)));
+// Кортежні патерни: камінь-ножиці-папір
+Console.WriteLine(Play(Move.Rock, Move.Scissors));
+Console.WriteLine(Play(Move.Rock, Move.Paper));
+Console.WriteLine(Play(Move.Paper, Move.Paper));
+// Скінченний автомат світлофора: (стан, подія) → новий стан
+Light light = Light.Red;
+Console.Write(light);
+foreach (Signal signal in new[] { Signal.Timer, Signal.Timer, Signal.Timer, Signal.Emergency, Signal.Timer })
+{
+    light = Next(light, signal);
+    Console.Write($" -{signal}-> {light}");
+}
+Console.WriteLine();
+
+static string Quadrant(Point p) => p switch
+{
+    (0, 0) => "початок",                                    // позиційний патерн: викликає Deconstruct
+    (_, 0) or (0, _) => "на осі",                           // _ — будь-яка координата
+    ( > 0, > 0) => "I",
+    ( < 0, > 0) => "II",
+    ( < 0, < 0) => "III",
+    _ => "IV"
+};
+static string DescribeFraction(Fraction f) => f switch
+{
+    (_, 0) => "некоректний дріб",
+    (0, _) => "нуль",
+    var (n, d) when n % d == 0 => $"ціле {n / d}",          // var (n, d) — деконструкція у змінні
+    (var n, var d) => $"{n}/{d}"
+};
+static string Play(Move first, Move second) => (first, second) switch
+{
+    var (a, b) when a == b => "нічия",
+    (Move.Rock, Move.Scissors) or (Move.Scissors, Move.Paper) or (Move.Paper, Move.Rock) => "виграв перший",
+    _ => "виграв другий"
+};
+static Light Next(Light current, Signal signal) => (current, signal) switch
+{
+    (_, Signal.Emergency) => Light.Red,                     // аварія — з будь-якого стану
+    (Light.Red, Signal.Timer) => Light.RedYellow,
+    (Light.RedYellow, Signal.Timer) => Light.Green,
+    (Light.Green, Signal.Timer) => Light.Yellow,
+    (Light.Yellow, Signal.Timer) => Light.Red,
+    _ => throw new ArgumentOutOfRangeException(nameof(current)) // enum може містити й неназвані значення
+};
+public readonly record struct Point(int X, int Y);           // record сам генерує Deconstruct(out int X, out int Y)
+public sealed class Fraction(int numerator, int denominator)
+{
+    public void Deconstruct(out int numerator1, out int denominator1) // звичайний клас: Deconstruct пишемо вручну
+    {
+        numerator1 = numerator;
+        denominator1 = denominator;
+    }
+}
+public enum Move { Rock, Paper, Scissors }
+public enum Light { Red, RedYellow, Green, Yellow }
+public enum Signal { Timer, Emergency }
+```
+
+**Приклад запуску:**
+```
+початок; на осі; I; II; III; IV
+нуль; ціле 2; некоректний дріб; 3/4
+виграв перший
+виграв другий
+нічия
+Red -Timer-> RedYellow -Timer-> Green -Timer-> Yellow -Emergency-> Red -Timer-> RedYellow
+```
+
+### 4.7. List-патерни (C# 11)
+`[p1, p2, ..]` перевіряє довжину та елементи будь-якого типу з `Length`/`Count` та індексатором: масивів, `List<T>`, `string`, `Span<T>`. `..` — «нуль або більше елементів» (не більше одного на патерн); `.. var middle` — **slice**-патерн, що захоплює зріз (потрібен індексатор з `Range`).
+
+```csharp
+int[][] arrays = [[], [7], [1, 2], [1, 2, 3, 4], [9, 0, 9], [5, 6, 7, 8]];
+foreach (int[] arr in arrays)
+{
+    Console.WriteLine($"[{string.Join(", ", arr)}] → {Describe(arr)}");
+}
+List<int> list = [3, 1, 4];
+Console.WriteLine(list is [_, _, _] ? "List з 3 елементів" : "інше"); // List<T> теж підтримує list-патерни
+// Рядки та span: елементи — char
+foreach (string file in new[] { "Program.cs", "README.md", "\"quoted\"", "x" })
+{
+    Console.WriteLine($"{file} → {Kind(file)}");
+}
+ReadOnlySpan<char> span = "2025-09-15".AsSpan();
+if (span is [var c1, var c2, var c3, var c4, '-', ..])       // span: без алокацій
+{
+    Console.WriteLine($"Рік: {c1}{c2}{c3}{c4}");
+}
+
+static string Describe(int[] a) => a switch
+{
+    [] => "порожній",
+    [var single] => $"один елемент {single}",
+    [1, 2] => "рівно [1, 2]",
+    [1, 2, ..] => "починається з 1, 2",                     // .. — нуль або більше елементів
+    [var first, .., var last] when first == last => $"однакові краї {first}",
+    [var first, .. var middle, var last] => $"перший {first}, середина [{string.Join(", ", middle)}], останній {last}" // slice-патерн
+};
+static string Kind(string s) => s switch
+{
+    [.., '.', 'c', 's'] => "C# файл",
+    [.., '.', 'm', 'd'] => "Markdown",
+    ['"', .. var inner, '"'] => $"у лапках: {inner}",       // slice рядка — теж string
+    _ => "невідомо"
+};
+```
+
+**Приклад запуску:**
+```
+[] → порожній
+[7] → один елемент 7
+[1, 2] → рівно [1, 2]
+[1, 2, 3, 4] → починається з 1, 2
+[9, 0, 9] → однакові краї 9
+[5, 6, 7, 8] → перший 5, середина [6, 7], останній 8
+List з 3 елементів
+Program.cs → C# файл
+README.md → Markdown
+"quoted" → у лапках: quoted
+x → невідомо
+Рік: 2025
+```
+
+### 4.8. Практичні приклади
+Оцінки за діапазонами, площі фігур над ієрархією `record`, HTTP-статуси, FizzBuzz через кортеж та обробка `null`:
+
+```csharp
+// 1. Оцінка за діапазонами балів
+Console.WriteLine(string.Join(" ", new[] { 100, 91, 75, 64, 12 }.Select(Grade)));
+try
+{
+    Grade(101);
+}
+catch (ArgumentOutOfRangeException e)
+{
+    Console.WriteLine(e.ParamName);
+}
+// 2. Площі фігур: type- і позиційні патерни над ієрархією record
+Shape[] shapes = [new Circle(1), new Rectangle(2, 3), new Rectangle(4, 4), new Triangle(3, 4, 5)];
+foreach (Shape shape in shapes)
+{
+    Console.WriteLine($"{Name(shape)}: {Area(shape):F2}");
+}
+// 3. HTTP-статуси
+Console.WriteLine(string.Join(" | ", new[] { 200, 204, 301, 404, 418, 503, 102, 999 }.Select(Http)));
+// 4. FizzBuzz через кортеж
+Console.WriteLine(string.Join(" ", Enumerable.Range(1, 15).Select(FizzBuzz)));
+// 5. Обробка null
+foreach (string? name in new[] { null, "", "   ", "Олена", "Максиміліанна" })
+{
+    Console.WriteLine(Greet(name));
+}
+
+static string Grade(int score) => score switch
+{
+    < 0 or > 100 => throw new ArgumentOutOfRangeException(nameof(score)), // спершу — некоректні значення
+    >= 90 => "A",
+    >= 75 => "B",
+    >= 60 => "C",
+    _ => "F"
+};
+static double Area(Shape shape) => shape switch
+{
+    Circle c => Math.PI * c.Radius * c.Radius,              // type-патерн зі змінною
+    Rectangle(var w, var h) => w * h,                       // позиційний: record має Deconstruct
+    Triangle(var a, var b, var c) => Heron(a, b, c),
+    _ => throw new ArgumentException($"Невідома фігура {shape}")
+};
+static string Name(Shape shape) => shape switch
+{
+    Circle => "коло",
+    Rectangle(var w, var h) when w == h => "квадрат",       // той самий тип, але уточнення через when
+    Rectangle => "прямокутник",
+    Triangle(var a, var b, var c) when a * a + b * b == c * c => "прямокутний трикутник",
+    Triangle => "трикутник",
+    _ => "?"
+};
+static double Heron(double a, double b, double c)
+{
+    double p = (a + b + c) / 2;
+    return Math.Sqrt(p * (p - a) * (p - b) * (p - c));
+}
+static string Http(int code) => code switch
+{
+    200 or 201 or 204 => $"{code} OK",
+    >= 200 and < 300 => $"{code} успіх",
+    >= 300 and < 400 => $"{code} перенаправлення",
+    404 => $"{code} не знайдено",
+    >= 400 and < 500 => $"{code} помилка клієнта",
+    >= 500 and < 600 => $"{code} помилка сервера",
+    >= 100 and < 200 => $"{code} інформаційний",
+    _ => $"{code} некоректний"
+};
+static string FizzBuzz(int i) => (i % 3, i % 5) switch
+{
+    (0, 0) => "FizzBuzz",
+    (0, _) => "Fizz",
+    (_, 0) => "Buzz",
+    _ => i.ToString()
+};
+static string Greet(string? name) => name switch
+{
+    null => "Привіт, незнайомцю",                           // null — перша гілка, далі name не null
+    { Length: 0 } => "Порожнє ім'я",
+    _ when string.IsNullOrWhiteSpace(name) => "Лише пробіли",
+    { Length: > 10 } => $"Привіт, {name[..10]}…",
+    _ => $"Привіт, {name}"
+};
+public abstract record Shape;
+public sealed record Circle(double Radius) : Shape;
+public sealed record Rectangle(double Width, double Height) : Shape;
+public sealed record Triangle(double A, double B, double C) : Shape;
+```
+
+**Приклад запуску:**
+```
+A A B C F
+score
+коло: 3.14
+прямокутник: 6.00
+квадрат: 16.00
+прямокутний трикутник: 6.00
+200 OK | 204 OK | 301 перенаправлення | 404 не знайдено | 418 помилка клієнта | 503 помилка сервера | 102 інформаційний | 999 некоректний
+1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz
+Привіт, незнайомцю
+Порожнє ім'я
+Лише пробіли
+Привіт, Олена
+Привіт, Максиміліа…
+```
+
+Розбір текстових команд через list-патерни та простий обчислювач виразів над деревом `record` (рекурсивні позиційні патерни):
+
+```csharp
+// Розбір команд: Split + list-патерни
+string[] commands = ["", "help", "add milk", "add eggs 12", "add eggs -1", "del a b c", "move box to kitchen", "jump"];
+foreach (string line in commands)
+{
+    Console.WriteLine($"'{line}' → {Execute(line)}");
+}
+// Обчислювач виразів: (2 + 3) * 4 + 0
+Expr expr = new Add(new Mul(new Add(new Num(2), new Num(3)), new Num(4)), new Num(0));
+Console.WriteLine($"{Show(expr)} = {Eval(expr)}");
+Expr simple = Simplify(expr);
+Console.WriteLine($"Спрощено: {Show(simple)} = {Eval(simple)}");
+Console.WriteLine(Show(Simplify(new Mul(new Num(1), new Mul(new Num(7), new Num(0))))));
+
+static string Execute(string line) => line.Split(' ', StringSplitOptions.RemoveEmptyEntries) switch
+{
+    [] => "порожня команда",
+    ["help"] => "команди: add, del, move",
+    ["add", var item] => $"додано {item}",
+    ["add", var item, var qty] when int.TryParse(qty, out int n) && n > 0 => $"додано {item} × {n}",
+    ["add", ..] => "некоректна кількість",
+    ["del", .. var items] when items.Length > 0 => $"видалено: {string.Join(", ", items)}",
+    ["move", var what, "to", var where] => $"{what} переміщено в {where}",
+    [var command, ..] => $"невідома команда '{command}'"
+};
+static double Eval(Expr e) => e switch
+{
+    Num(var value) => value,
+    Add(var left, var right) => Eval(left) + Eval(right),   // рекурсія по дереву
+    Mul(var left, var right) => Eval(left) * Eval(right),
+    _ => throw new NotSupportedException(e.GetType().Name)
+};
+static Expr Simplify(Expr e) => e switch
+{
+    Add(var l, var r) => (Simplify(l), Simplify(r)) switch
+    {
+        (Num(0), var x) => x,                               // 0 + x = x
+        (var x, Num(0)) => x,                               // x + 0 = x (var не можна оголошувати всередині or)
+        var (x, y) => new Add(x, y)
+    },
+    Mul(var l, var r) => (Simplify(l), Simplify(r)) switch
+    {
+        (Num(0), _) or (_, Num(0)) => new Num(0),            // x * 0 = 0
+        (Num(1), var x) => x,                               // 1 * x = x
+        (var x, Num(1)) => x,                               // x * 1 = x
+        var (x, y) => new Mul(x, y)
+    },
+    _ => e
+};
+static string Show(Expr e) => e switch
+{
+    Num(var v) => v.ToString(),
+    Add(var l, var r) => $"({Show(l)} + {Show(r)})",
+    Mul(var l, var r) => $"{Show(l)} * {Show(r)}",
+    _ => "?"
+};
+public abstract record Expr;
+public sealed record Num(double Value) : Expr;
+public sealed record Add(Expr Left, Expr Right) : Expr;
+public sealed record Mul(Expr Left, Expr Right) : Expr;
+```
+
+**Приклад запуску:**
+```
+'' → порожня команда
+'help' → команди: add, del, move
+'add milk' → додано milk
+'add eggs 12' → додано eggs × 12
+'add eggs -1' → некоректна кількість
+'del a b c' → видалено: a, b, c
+'move box to kitchen' → box переміщено в kitchen
+'jump' → невідома команда 'jump'
+((2 + 3) * 4 + 0) = 20
+Спрощено: (2 + 3) * 4 = 20
+0
+```
+
+### 4.9. Порядок гілок, `when` і продуктивність
+- **Гілки перевіряються зверху вниз**, перша збіжна перемагає. Тому конкретніші патерни — вище, загальніші — нижче.
+- Якщо гілку повністю «накриває» попередня (subsumption) — **помилка** CS8510 у switch-виразі або CS8120 у switch-операторі:
+
+```csharp
+// НЕ КОМПІЛЮЄТЬСЯ: CS8510 The pattern is unreachable. It has already been handled by a previous arm
+Console.WriteLine(Grade(95));
+static string Grade(int score) => score switch
+{
+    >= 60 => "C",
+    >= 90 => "A",
+    _ => "F"
+};
+```
+
+```csharp
+// НЕ КОМПІЛЮЄТЬСЯ: CS8120 The switch case is unreachable. It has already been handled by a previous case
+object o = 5;
+switch (o)
+{
+    case int:
+        Console.WriteLine("int");
+        break;
+    case int n when n > 0:
+        Console.WriteLine("додатне");
+        break;
+}
+```
+
+- **`when` vs патерни.** Патерни компілятор «розуміє»: перевіряє повноту й недосяжність. Умова `when` для нього — чорна скринька. Нижче логічно покрито все, але компілятор видає попередження CS8846 (приклад компілюється):
+
+```csharp
+// Компілюється з попередженням CS8846: компілятор не аналізує умови when
+Console.WriteLine(Sign(-3));
+static string Sign(int x) => x switch
+{
+    int n when n >= 0 => "невід'ємне",
+    int n when n < 0 => "від'ємне"
+};
+```
+
+Краще: `>= 0 => "невід'ємне", _ => "від'ємне"`. Правило: якщо умову можна виразити патерном (`> 0`, `{ Length: 0 }`, `null`) — пишіть патерн; `when` — для зв'язків між змінними (`a == b`) і викликів методів.
+- **Продуктивність.** Компілятор перетворює весь `switch` на **дерево рішень** (decision tree): кожна перевірка (тип, довжина, властивість) виконується максимум один раз, а щільні цілі константи — у таблицю переходів (`switch` IL). Рядкові константи порівнюються через обчислений хеш або довжину + символ. Тому великий `switch` зазвичай не повільніший за ручний ланцюжок `if`, а часто швидший.
+- **Pattern matching чи поліморфізм?**
+
+| Обирайте `switch` з патернами | Обирайте `virtual`/`abstract` методи |
+|-------------------------------|--------------------------------------|
+| Набір типів **закритий** і стабільний (дерево виразів, повідомлення протоколу) | Нові типи з'являються часто (плагіни, фігури від користувачів) |
+| Операцій **багато** і вони додаються (Eval, Show, Simplify) | Операцій мало, а поведінка — частина типу |
+| Типи — «дані» (`record`) без поведінки | Об'єкти з інкапсульованим станом |
+| Рішення залежить від **кількох** об'єктів одразу (`(a, b) switch`) | Рішення залежить від одного об'єкта |
+
+Додаючи новий тип до ієрархії з патернами, доведеться оновити **всі** `switch`; додаючи нову операцію до поліморфної ієрархії — **всі** класи. Для `IShape` з §7 поліморфізм природніший, для `Expr` з §4.8 — патерни.
+
+### 4.10. Типові помилки
+- **Неправильний порядок діапазонів:** `>= 60` перед `>= 90` — гілка `A` недосяжна (CS8510). Від вужчого до ширшого.
+- **`_` або `var x` не останньою гілкою** — усе нижче стає недосяжним.
+- **Змінна в `or`/`not`:** `(Num(1), var x) or (var x, Num(1))` — CS8780; розбийте на дві гілки.
+- **Реляційний патерн з неконстантою:** `> limit` не компілюється — порівняння зі змінною лише через `when x > limit`.
+- **`x == null` замість `x is null`:** `==` може бути перевантажений; `is null` — завжди перевірка посилання.
+- **Ігнорування CS8509:** неповний switch-вираз компілюється, але падає `SwitchExpressionException` на першому непередбаченому значенні. Додавайте `_ => throw ...` явно.
+- **`..` двічі в list-патерні** (`[.., 1, ..]`) — не дозволено; для пошуку всередині використовуйте `Contains`.
+- **Очікування fall-through як у C++** — кожна непорожня секція `case` завершується `break`/`return`/`goto case`.
+
+### 4.11. Міні-вправи
+**Вправа 1.** Напишіть `IsLeap(int year)` одним switch-виразом по кортежу `(year % 4, year % 100, year % 400)`. Перевірте на 2024, 2025, 1900, 2000.
+
+<details>
+<summary>Розв'язок</summary>
+
+```csharp
+foreach (int year in new[] { 2024, 2025, 1900, 2000 })
+{
+    Console.WriteLine($"{year}: {(IsLeap(year) ? "високосний" : "звичайний")}");
+}
+static bool IsLeap(int year) => (year % 4, year % 100, year % 400) switch
+{
+    (_, _, 0) => true,                                      // ділиться на 400
+    (_, 0, _) => false,                                     // ділиться на 100, але не на 400
+    (0, _, _) => true,                                      // ділиться на 4
+    _ => false
+};
+```
+
+**Приклад запуску:**
+```
+2024: високосний
+2025: звичайний
+1900: звичайний
+2000: високосний
+```
+
+</details>
+
+**Вправа 2.** Класифікуйте трикутник за сторонами `(a, b, c)`: «некоректні сторони» (≤ 0), «не існує» (порушено нерівність трикутника), «рівносторонній», «рівнобедрений», «різносторонній». Зверніть увагу на порядок гілок.
+
+<details>
+<summary>Розв'язок</summary>
+
+```csharp
+(double, double, double)[] triangles = [(3, 3, 3), (5, 5, 8), (3, 4, 5), (1, 2, 10), (0, 4, 4)];
+foreach (var (a, b, c) in triangles)
+{
+    Console.WriteLine($"({a}, {b}, {c}) → {Classify(a, b, c)}");
+}
+static string Classify(double a, double b, double c) => (a, b, c) switch
+{
+    _ when a <= 0 || b <= 0 || c <= 0 => "некоректні сторони",
+    _ when a + b <= c || a + c <= b || b + c <= a => "не існує",
+    var (x, y, z) when x == y && y == z => "рівносторонній",
+    var (x, y, z) when x == y || y == z || x == z => "рівнобедрений",
+    _ => "різносторонній"
+};
+```
+
+**Приклад запуску:**
+```
+(3, 3, 3) → рівносторонній
+(5, 5, 8) → рівнобедрений
+(3, 4, 5) → різносторонній
+(1, 2, 10) → не існує
+(0, 4, 4) → некоректні сторони
+```
+
+</details>
 
 ---
 
@@ -1452,58 +2210,10 @@ True
 ```
 
 ### 13.5. Pattern matching: property, list, relational
-Патерни перевіряють форму даних: властивості `{ Total: > 1000 }`, списки `[1, .., var last]`, порівняння `>`/`<`, умови `when`.
-
-```csharp
-object[] items = [new Order("UA", 1500m), new Order("PL", 50m), new int[] { 1, 2, 3 }, 42];
-foreach (object item in items) Console.WriteLine(Describe(item));
-static string Describe(object o) => o switch
-{
-    Order { Country: "UA", Total: > 1000m } => "Велике замовлення з України", // property + relational
-    Order { Total: < 100m } o2             => $"Мале замовлення: {o2.Total}",
-    int[] and [1, .., var last]            => $"Масив з 1 на початку, останній {last}", // list pattern
-    int n when n % 2 == 0                  => $"Парне число {n}",
-    _                                      => "Інше"
-};
-public record Order(string Country, decimal Total);
-```
-
-**Приклад запуску:**
-```
-Велике замовлення з України
-Мале замовлення: 50
-Масив з 1 на початку, останній 3
-Парне число 42
-```
+Патерни перевіряють **форму** даних: тип (`int n`), порівняння (`> 0`), логічні комбінації (`and`/`or`/`not`), властивості (`{ Address.City: "Київ" }`), позиції (`(0, _)`), списки (`[1, .., var last]`). Докладно, з прикладами й типовими помилками, — у [§4.4–4.7](#44-базові-патерни-константа-тип-var-_-реляційні-логічні).
 
 ### 13.6. switch-вирази
-`switch` як вираз: коротко, повертає значення, компілятор попереджає про неповне покриття. Можна перемикатися по кортежах.
-
-```csharp
-foreach (int score in new[] { 95, 78, 61, 30 })
-    Console.Write($"{Grade(score)} ");
-Console.WriteLine();
-Console.WriteLine(Rotate((1, 0), "left"));
-static char Grade(int score) => score switch  // вираз повертає значення, компілятор перевіряє повноту
-{
-    >= 90 => 'A',
-    >= 75 => 'B',
-    >= 60 => 'C',
-    _     => 'F'
-};
-static (int X, int Y) Rotate((int X, int Y) v, string dir) => (v, dir) switch
-{
-    (_, "left")  => (-v.Y, v.X),            // switch по кортежу
-    (_, "right") => (v.Y, -v.X),
-    _ => throw new ArgumentException(dir)
-};
-```
-
-**Приклад запуску:**
-```
-A B C F 
-(0, 1)
-```
+`x switch { патерн => значення, _ => ... }` — вираз, що повертає результат; компілятор попереджає про неповне покриття (CS8509) і забороняє недосяжні гілки (CS8510). Перемикання за кортежами `(a, b) switch` зручне для таблиць рішень. Докладно — у [§4.3](#43-switch-вирази), практичні приклади — у [§4.8](#48-практичні-приклади).
 
 ### 13.7. Nullable reference types і `?.`, `??`, `??=`
 `string?` явно дозволяє `null`, а компілятор попереджає про потенційний `NullReferenceException`. Оператори `?.`, `??`, `??=` роблять роботу з null короткою.
@@ -1715,7 +2425,7 @@ public class User
 
 ## 14. Підсумки
 - C# має **фіксовані розміри** типів, `const` (компіляція) і `readonly` (виконання), статичний `var`.
-- `switch`-вирази та патерни (`is int k and > 0`) замінюють громіздкі ланцюжки `if`.
+- Класичний `switch` не має fall-through (CS0163); `switch`-вирази й патерни — константні, типові, реляційні, логічні, property, позиційні, кортежні та list — замінюють ланцюжки `if`; гілки йдуть від вужчих до ширших (CS8510), неповнота — CS8509; для закритих ієрархій даних патерни, для розширюваних — поліморфізм.
 - Масиви: `int[]`, прямокутні `int[,]`, зубчасті `int[][]`; `foreach` — зручний обхід.
 - `ref`/`out`/`in` замінюють посилання та вказівники C++; пам'ять звільняє GC.
 - ООП: один базовий клас + інтерфейси; `record` — рівність за значенням; `string?` — явний null.
@@ -1748,3 +2458,7 @@ public class User
 16. Чому `MyList<T>` подвоює масив, а не збільшує його на 1, і яка амортизована складність `Add`?
 17. Що станеться зі споживачем `await foreach (var x in reader.ReadAllAsync())`, якщо виробник не викличе `Complete()`?
 18. Чим відрізняються `BoundedChannelFullMode.Wait`, `DropOldest` і `DropWrite`?
+19. Чим switch-вираз відрізняється від switch-оператора і що станеться під час виконання, якщо жодна гілка не збіглася?
+20. Чому `score switch { >= 60 => "C", >= 90 => "A", _ => "F" }` не компілюється і як це виправити?
+21. Чим відрізняються патерни `{ Address.City: "Київ" }`, `(0, _)` та `[var first, .., var last]` і що кожен вимагає від типу?
+22. Коли для ієрархії типів краще обрати `switch` з патернами, а коли — `virtual`-методи?
