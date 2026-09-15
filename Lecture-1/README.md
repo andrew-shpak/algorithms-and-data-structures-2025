@@ -1,3 +1,3 @@
-# Lecture 7
+# Lecture 1
 
 - Examples: [Examples.md](Examples.md)

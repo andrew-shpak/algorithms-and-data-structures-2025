@@ -5,22 +5,21 @@
 видалити книгу за ISBN.
 
 ## Вимоги
-- Клас `Book` з полями: `title`, `author`, `isbn`, `year`.
+- Клас `Book` з властивостями: `Title`, `Author`, `Isbn`, `Year`.
 - Клас `Library`, що виконує лише операції додавання й видалення.
-- Сховище книжок: `std::list<Book>`.
-- Контроль унікальності ISBN: `std::unordered_set<std::string>`.
+- Сховище книжок: `LinkedList<Book>`.
+- Контроль унікальності ISBN: `HashSet<string>`.
 
 ## Необхідні методи
-```cpp
-class Library {
-public:
-    bool add_book(const Book &book);          // false, якщо ISBN вже існує
-    bool remove_book(const std::string &isbn); // false, якщо ISBN не знайдено
+```csharp
+public class Library
+{
+    private readonly LinkedList<Book> _books = new();
+    private readonly HashSet<string> _isbnIndex = new();
 
-private:
-    std::list<Book> books_;
-    std::unordered_set<std::string> isbn_index_;
-};
+    public bool AddBook(Book book);      // false, якщо ISBN вже існує
+    public bool RemoveBook(string isbn); // false, якщо ISBN не знайдено
+}
 ```
 
 ## Приклад взаємодії

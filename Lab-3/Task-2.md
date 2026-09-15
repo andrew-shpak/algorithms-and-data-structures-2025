@@ -5,23 +5,22 @@
 проект і видалити проект.
 
 ## Вимоги
-- Клас `Project` з полями: `name`, `manager`, `budget`, `std::list<std::string> members`.
+- Клас `Project` з властивостями: `Name`, `Manager`, `Budget`, `LinkedList<string> Members`.
 - Клас `ProjectRegistry` надає лише операції додавання і видалення.
-- Довідник валідних співробітників: `std::unordered_set<std::string>` для
+- Довідник валідних співробітників: `HashSet<string>` для
   перевірки учасників при додаванні проекту (його можна передавати в конструктор
   або ініціалізувати іншим зручним способом).
 
 ## Необхідні методи
-```cpp
-class ProjectRegistry {
-public:
-    bool add_project(Project project);                    // false, якщо назва зайнята або учасник поза компанією
-    bool remove_project(const std::string &project_name);  // false, якщо проект не знайдено
+```csharp
+public class ProjectRegistry
+{
+    private readonly LinkedList<Project> _projects = new();
+    private readonly HashSet<string> _companyEmployees;
 
-private:
-    std::list<Project> projects_;
-    std::unordered_set<std::string> company_employees_;
-};
+    public bool AddProject(Project project);        // false, якщо назва зайнята або учасник поза компанією
+    public bool RemoveProject(string projectName);  // false, якщо проект не знайдено
+}
 ```
 
 ## Приклад взаємодії

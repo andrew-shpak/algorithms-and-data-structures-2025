@@ -5,7 +5,7 @@
 забезпечуючи коректну обробку базових випадків і повторне використання логіки.
 
 ## Вимоги
-- Реалізуйте функцію `power(base, exp)` і використайте її у функції `main`, як
+- Реалізуйте узагальнений метод `Power(baseValue, exp)` і використайте його в `Program.cs`, як
   показано в прикладі.
 - Забезпечте коректний результат для цілих і дробових чисел, передбачте
   випадок, коли `exp == 0`.
@@ -15,35 +15,29 @@
   показників можна перейти на ітеративний варіант.
 
 
-## Приклад `main`
-```cpp
-#include <iostream>
-using namespace std;
+## Приклад `Program.cs`
+```csharp
+using System.Globalization;
+using System.Numerics;
 
-T power(base, exp) {
+static T Power<T>(T baseValue, int exp) where T : INumber<T>
+{
+    throw new NotImplementedException();  // реалізуйте
 }
 
-int main() {
-    // Для цілих чисел
-    int intBase;
-    int intExp;
-    cout << "Введіть ціле число (основа): ";
-    cin >> intBase;
-    cout << "Введіть степінь: ";
-    cin >> intExp;
-    cout << "Результат (int): " << power(intBase, intExp) << endl;
+// Для цілих чисел
+Console.Write("Введіть ціле число (основа): ");
+int intBase = int.Parse(Console.ReadLine()!);
+Console.Write("Введіть степінь: ");
+int intExp = int.Parse(Console.ReadLine()!);
+Console.WriteLine($"Результат (int): {Power(intBase, intExp)}");
 
-    // Для дробових чисел
-    double doubleBase;
-    int doubleExp;
-    cout << "\nВведіть дробове число (основа): ";
-    cin >> doubleBase;
-    cout << "Введіть степінь: ";
-    cin >> doubleExp;
-    cout << "Результат (double): " << power(doubleBase, doubleExp) << endl;
-
-    return 0;
-}
+// Для дробових чисел
+Console.Write("\nВведіть дробове число (основа): ");
+double doubleBase = double.Parse(Console.ReadLine()!, CultureInfo.InvariantCulture);
+Console.Write("Введіть степінь: ");
+int doubleExp = int.Parse(Console.ReadLine()!);
+Console.WriteLine($"Результат (double): {Power(doubleBase, doubleExp).ToString(CultureInfo.InvariantCulture)}");
 ```
 
 ### Приклад запуску
@@ -74,7 +68,7 @@ int main() {
 числових типів, використовуючи рекурсивний підхід.
 
 ## Вимоги
-- Напишіть функцію `arraySum(arr, n)` і викличте її у `main`, як у наведеному
+- Напишіть узагальнений метод `ArraySum(arr, n)` і викличте його в `Program.cs`, як у наведеному
   прикладі.
 - Підтримайте введення масивів для типів `int` та `double`, включно з випадком `n == 0`.
 - Забезпечте виведення сум для обох масивів за зразком прикладу.
@@ -82,41 +76,38 @@ int main() {
 - **Пам'ять:** рекурсія споживає стек пропорційно `n`; для великих масивів
   дозволено перейти на ітеративний підрахунок.
 
-## Приклад `main`
-```cpp
-#include <iostream>
-#include <vector>
-using namespace std;
+## Приклад `Program.cs`
+```csharp
+using System.Globalization;
+using System.Numerics;
 
-T arraySum(arr, n) {
+static T ArraySum<T>(List<T> arr, int n) where T : INumber<T>
+{
+    throw new NotImplementedException();  // реалізуйте
 }
 
-int main() {
-    // Для цілих чисел
-    int intN;
-    cout << "Введіть розмір масиву (int): ";
-    cin >> intN;
-    vector<int> intArr(intN);
-    cout << "Введіть " << intN << " цілих чисел: ";
-    for (int i = 0; i < intN; i++) {
-        cin >> intArr[i];
-    }
-    cout << "Сума (int): " << arraySum(intArr, intN) << endl;
+static List<T> ReadValues<T>(int count) where T : IParsable<T> =>
+    count == 0
+        ? []
+        : Console.ReadLine()!
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(count)
+            .Select(token => T.Parse(token, CultureInfo.InvariantCulture))
+            .ToList();
 
-    // Для дробових чисел
-    int doubleN;
-    cout << "\nВведіть розмір масиву (double): ";
-    cin >> doubleN;
+// Для цілих чисел
+Console.Write("Введіть розмір масиву (int): ");
+int intN = int.Parse(Console.ReadLine()!);
+if (intN > 0) Console.Write($"Введіть {intN} цілих чисел: ");
+List<int> intArr = ReadValues<int>(intN);
+Console.WriteLine($"Сума (int): {ArraySum(intArr, intN)}");
 
-    vector<double> doubleArr(doubleN);
-    cout << "Введіть " << doubleN << " дробових чисел: ";
-    for (int i = 0; i < doubleN; i++) {
-        cin >> doubleArr[i];
-    }
-    cout << "Сума (double): " << arraySum(doubleArr, doubleN) << endl;
-
-    return 0;
-}
+// Для дробових чисел
+Console.Write("\nВведіть розмір масиву (double): ");
+int doubleN = int.Parse(Console.ReadLine()!);
+if (doubleN > 0) Console.Write($"Введіть {doubleN} дробових чисел: ");
+List<double> doubleArr = ReadValues<double>(doubleN);
+Console.WriteLine($"Сума (double): {ArraySum(doubleArr, doubleN).ToString(CultureInfo.InvariantCulture)}");
 ```
 
 ### Приклад запуску
@@ -145,62 +136,49 @@ int main() {
 для різних типів даних, використовуючи рекурсивне порівняння.
 
 ## Вимоги
-- Створіть функцію `findMin(arr, n)` і використайте її в `main`, як у прикладі.
-- Реалізуйте введення/виведення для `int`, `double` і `string` масивів.
+- Створіть узагальнений метод `FindMin(arr, n)` і використайте його в `Program.cs`, як у прикладі.
+- Реалізуйте введення/виведення для `int`, `double` і `string` масивів (`List<T>`).
 - Переконайтеся, що оброблено базовий випадок `n == 1`.
 - **Примітка:** завдання оцінюється в 2 бали.
 - **Пам'ять:** зверніть увагу на глибину рекурсії; за потреби оптимізуйте
   обхід, щоб не перевищити ліміт стека.
 
-## Приклад `main`
-```cpp
-#include <iostream>
-#include <vector>
-#include <string>
-using namespace std;
+## Приклад `Program.cs`
+```csharp
+using System.Globalization;
 
-T findMin(arr, n) {
+static T FindMin<T>(List<T> arr, int n) where T : IComparable<T>
+{
+    throw new NotImplementedException();  // реалізуйте
 }
 
-int main() {
-    // Для цілих чисел
-    int intN;
-    cout << "Введіть розмір масиву (int): ";
-    cin >> intN;
+static List<T> ReadValues<T>(int count) where T : IParsable<T> =>
+    Console.ReadLine()!
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(count)
+        .Select(token => T.Parse(token, CultureInfo.InvariantCulture))
+        .ToList();
 
-    vector<int> intArr(intN);
-    cout << "Введіть " << intN << " чисел: ";
-    for (int i = 0; i < intN; i++) {
-        cin >> intArr[i];
-    }
-    cout << "Мінімум (int): " << findMin(intArr, intN) << endl;
+// Для цілих чисел
+Console.Write("Введіть розмір масиву (int): ");
+int intN = int.Parse(Console.ReadLine()!);
+Console.Write($"Введіть {intN} чисел: ");
+List<int> intArr = ReadValues<int>(intN);
+Console.WriteLine($"Мінімум (int): {FindMin(intArr, intN)}");
 
-    // Для дробових чисел
-    int doubleN;
-    cout << "\nВведіть розмір масиву (double): ";
-    cin >> doubleN;
+// Для дробових чисел
+Console.Write("\nВведіть розмір масиву (double): ");
+int doubleN = int.Parse(Console.ReadLine()!);
+Console.Write($"Введіть {doubleN} дробових чисел: ");
+List<double> doubleArr = ReadValues<double>(doubleN);
+Console.WriteLine($"Мінімум (double): {FindMin(doubleArr, doubleN).ToString(CultureInfo.InvariantCulture)}");
 
-    vector<double> doubleArr(doubleN);
-    cout << "Введіть " << doubleN << " дробових чисел: ";
-    for (int i = 0; i < doubleN; i++) {
-        cin >> doubleArr[i];
-    }
-    cout << "Мінімум (double): " << findMin(doubleArr, doubleN) << endl;
-
-    // Для рядків
-    int strN;
-    cout << "\nВведіть кількість рядків: ";
-    cin >> strN;
-
-    vector<string> strArr(strN);
-    cout << "Введіть " << strN << " рядків: ";
-    for (int i = 0; i < strN; i++) {
-        cin >> strArr[i];
-    }
-    cout << "Мінімум (string): " << findMin(strArr, strN) << endl;
-
-    return 0;
-}
+// Для рядків
+Console.Write("\nВведіть кількість рядків: ");
+int strN = int.Parse(Console.ReadLine()!);
+Console.Write($"Введіть {strN} рядків: ");
+List<string> strArr = ReadValues<string>(strN);
+Console.WriteLine($"Мінімум (string): {FindMin(strArr, strN)}");
 ```
 
 ### Приклад запуску
@@ -240,61 +218,49 @@ int main() {
 Працюйте з різними типами.
 
 ## Вимоги
-- Створіть шаблон `merge_sort(data, left, right, comp)`.
-- Реалізуйте окрему функцію злиття.
+- Створіть узагальнений метод `MergeSort<T>(data, left, right, comp)`, де `comp` — `Func<T, T, bool>`.
+- Реалізуйте окремий метод злиття.
 - Підтримайте сортування `int`, `double` і `string`.
-- Додайте простий кастомний компаратор на лямбді.
+- Додайте простий кастомний компаратор у вигляді лямбда-виразу.
 - Обробіть випадки `left >= right` і порожній масив.
 - Додайте простий діалог введення/виведення.
 - **Бали:** 4.
 - **Пам'ять:** один буфер злиття.
 - Перевикористовуйте його на всіх рівнях.
 
-## Приклад `main`
-```cpp
-#include <iostream>
-#include <string>
-#include <vector>
-using namespace std;
-
-template <typename T, typename Compare>
-void merge_sort(vector<T> &data, int left, int right, Compare comp);
-
-int main() {
-    int n;
-    cout << "Скільки цілих? ";
-    cin >> n;
-    vector<int> numbers(n);
-    for (int &value : numbers) {
-        cin >> value;
-    }
-    auto ascending_int = [](const int &lhs, const int &rhs) {
-        // реалізуйте порівняння
-    };
-    merge_sort(numbers, 0, n - 1, ascending_int);
-    cout << "Int: ";
-    for (int value : numbers) {
-        cout << value << ' ';
-    }
-    cout << endl;
-
-    int m;
-    cout << "Скільки рядків? ";
-    cin >> m;
-    vector<string> words(m);
-    for (string &word : words) {
-        cin >> word;
-    }
-    auto by_length = [](const string &lhs, const string &rhs) {
-        // реалізуйте порівняння
-    };
-    merge_sort(words, 0, m - 1, by_length);
-    cout << "String: ";
-    for (const string &word : words) {
-        cout << word << ' ';
-    }
-    cout << endl;
+## Приклад `Program.cs`
+```csharp
+static void MergeSort<T>(List<T> data, int left, int right, Func<T, T, bool> comp)
+{
+    throw new NotImplementedException();  // реалізуйте (разом з окремим методом злиття)
 }
+
+Console.Write("Скільки цілих? ");
+int n = int.Parse(Console.ReadLine()!);
+List<int> numbers = Console.ReadLine()!
+    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+    .Take(n)
+    .Select(int.Parse)
+    .ToList();
+Func<int, int, bool> ascendingInt = (lhs, rhs) =>
+{
+    throw new NotImplementedException();  // реалізуйте порівняння
+};
+MergeSort(numbers, 0, n - 1, ascendingInt);
+Console.WriteLine($"Int: {string.Join(' ', numbers)}");
+
+Console.Write("Скільки рядків? ");
+int m = int.Parse(Console.ReadLine()!);
+List<string> words = Console.ReadLine()!
+    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+    .Take(m)
+    .ToList();
+Func<string, string, bool> byLength = (lhs, rhs) =>
+{
+    throw new NotImplementedException();  // реалізуйте порівняння
+};
+MergeSort(words, 0, m - 1, byLength);
+Console.WriteLine($"String: {string.Join(' ', words)}");
 ```
 
 ### Приклад запуску

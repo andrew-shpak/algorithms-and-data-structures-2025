@@ -1,6 +1,8 @@
 # Lab-8-2026 — Бінарні дерева
 
-## [IDE](https://onecompiler.com/cpp)
+## [IDE](https://onecompiler.com/csharp)
+
+> Локально: створіть проєкт командою `dotnet new console`, вставте код у `Program.cs` і запустіть `dotnet run`.
 
 ---
 
@@ -13,53 +15,51 @@
 - **Бали:** 1
 - **Складність:** O(n) для кожного обходу, де n — кількість вузлів
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-using namespace std;
+```csharp
+Node? root = null;
+foreach (int v in new[] { 50, 30, 70, 20, 40, 60, 80 })
+    root = Insert(root, v);
 
-struct Node {
-    int data;
-    Node* left;
-    Node* right;
-    Node(int val) : data(val), left(nullptr), right(nullptr) {}
-};
+Console.Write("Інфіксний обхід (Inorder): ");
+Inorder(root);
+Console.WriteLine();
 
-Node* insert(Node* root, int val) {
+Console.Write("Префіксний обхід (Preorder): ");
+Preorder(root);
+Console.WriteLine();
+
+Console.Write("Постфіксний обхід (Postorder): ");
+Postorder(root);
+Console.WriteLine();
+
+static Node Insert(Node? root, int value)
+{
+    // Ваш код тут
+    throw new NotImplementedException();
+}
+
+static void Inorder(Node? root)
+{
     // Ваш код тут
 }
 
-void inorder(Node* root) {
+static void Preorder(Node? root)
+{
     // Ваш код тут
 }
 
-void preorder(Node* root) {
+static void Postorder(Node? root)
+{
     // Ваш код тут
 }
 
-void postorder(Node* root) {
-    // Ваш код тут
-}
-
-int main() {
-    Node* root = nullptr;
-    for (int v : {50, 30, 70, 20, 40, 60, 80})
-        root = insert(root, v);
-
-    cout << "Інфіксний обхід (Inorder): ";
-    inorder(root);
-    cout << endl;
-
-    cout << "Префіксний обхід (Preorder): ";
-    preorder(root);
-    cout << endl;
-
-    cout << "Постфіксний обхід (Postorder): ";
-    postorder(root);
-    cout << endl;
-
-    return 0;
+class Node(int data)
+{
+    public int Data { get; set; } = data;
+    public Node? Left { get; set; }
+    public Node? Right { get; set; }
 }
 ```
 
@@ -84,65 +84,59 @@ int main() {
 
 ### Підказка
 
-Для кожного вузла найдовший шлях, що проходить через нього, дорівнює сумі висот його лівого та правого піддерев (+ 2 ребра до кожного нащадка). Діаметр дерева — максимум серед усіх таких шляхів. Задачу можна розв'язати за один прохід, обчислюючи висоту та діаметр одночасно.
+Для кожного вузла найдовший шлях, що проходить через нього, дорівнює сумі висот його лівого та правого піддерев (+ 2 ребра до кожного нащадка). Діаметр дерева — максимум серед усіх таких шляхів. Задачу можна розв'язати за один прохід, обчислюючи висоту та діаметр одночасно (висоту повертайте через параметр `out`).
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-#include <algorithm>
-using namespace std;
+```csharp
+// Дерево 1 (збалансоване):
+//         50
+//        /  \
+//      30    70
+//     / \   / \
+//    20  40 60  80
+Node? root1 = null;
+foreach (int v in new[] { 50, 30, 70, 20, 40, 60, 80 })
+    root1 = Insert(root1, v);
 
-struct Node {
-    int data;
-    Node* left;
-    Node* right;
-    Node(int val) : data(val), left(nullptr), right(nullptr) {}
-};
+Console.WriteLine("Дерево 1 (збалансоване):");
+Console.WriteLine($"Діаметр: {Diameter(root1, out _)}");
+Console.WriteLine();
 
-Node* insert(Node* root, int val) {
+// Дерево 2 (діаметр НЕ проходить через корінь):
+//         50
+//        /
+//      30
+//     / \
+//    20   40
+//   /      \
+//  10       45
+Node? root2 = null;
+foreach (int v in new[] { 50, 30, 20, 10, 40, 45 })
+    root2 = Insert(root2, v);
+
+Console.WriteLine("Дерево 2 (діаметр не через корінь):");
+Console.WriteLine($"Діаметр: {Diameter(root2, out _)}");
+
+static Node Insert(Node? root, int value)
+{
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 // Повертає діаметр дерева
 // height — вихідний параметр для висоти піддерева
-int diameter(Node* root, int& height) {
+static int Diameter(Node? root, out int height)
+{
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
-int main() {
-    // Дерево 1 (збалансоване):
-    //         50
-    //        /  \
-    //      30    70
-    //     / \   / \
-    //    20  40 60  80
-    Node* root1 = nullptr;
-    for (int v : {50, 30, 70, 20, 40, 60, 80})
-        root1 = insert(root1, v);
-
-    int h = 0;
-    cout << "Дерево 1 (збалансоване):" << endl;
-    cout << "Діаметр: " << diameter(root1, h) << endl;
-    cout << endl;
-
-    // Дерево 2 (діаметр НЕ проходить через корінь):
-    //         50
-    //        /
-    //      30
-    //     / \
-    //    20   40
-    //   /      \
-    //  10       45
-    Node* root2 = nullptr;
-    for (int v : {50, 30, 20, 10, 40, 45})
-        root2 = insert(root2, v);
-
-    h = 0;
-    cout << "Дерево 2 (діаметр не через корінь):" << endl;
-    cout << "Діаметр: " << diameter(root2, h) << endl;
-
-    return 0;
+class Node(int data)
+{
+    public int Data { get; set; } = data;
+    public Node? Left { get; set; }
+    public Node? Right { get; set; }
 }
 ```
 
@@ -167,78 +161,65 @@ int main() {
 - **Бали:** 2
 - **Складність:** O(n), де n — кількість вузлів
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-#include <climits>
-using namespace std;
-
-struct Node {
-    int data;
-    Node* left;
-    Node* right;
-    Node(int val) : data(val), left(nullptr), right(nullptr) {}
+```csharp
+// Дерево 1: коректне BST
+//       50
+//      /  \
+//    30    70
+//   / \   / \
+//  20  40 60  80
+var t1 = new Node(50)
+{
+    Left = new Node(30) { Left = new Node(20), Right = new Node(40) },
+    Right = new Node(70) { Left = new Node(60), Right = new Node(80) },
 };
 
-// Перевірка BST з допустимим діапазоном [min_val, max_val]
-bool is_valid_bst(Node* root, long long min_val, long long max_val) {
+Console.WriteLine($"Дерево 1: {(IsValidBst(t1) ? "Коректне BST" : "Не BST")}");
+
+// Дерево 2: НЕ коректне BST
+//       50
+//      /  \
+//    30    70
+//   / \
+//  20  60  <-- 60 > 50, але знаходиться в лівому піддереві кореня
+var t2 = new Node(50)
+{
+    Left = new Node(30) { Left = new Node(20), Right = new Node(60) },
+    Right = new Node(70),
+};
+
+Console.WriteLine($"Дерево 2: {(IsValidBst(t2) ? "Коректне BST" : "Не BST")}");
+
+// Дерево 3: НЕ коректне BST
+//       50
+//      /  \
+//    30    70
+//         / \
+//        40  80  <-- 40 < 50, але знаходиться в правому піддереві кореня
+var t3 = new Node(50)
+{
+    Left = new Node(30),
+    Right = new Node(70) { Left = new Node(40), Right = new Node(80) },
+};
+
+Console.WriteLine($"Дерево 3: {(IsValidBst(t3) ? "Коректне BST" : "Не BST")}");
+
+static bool IsValidBst(Node? root) => IsValidBstInRange(root, long.MinValue, long.MaxValue);
+
+// Перевірка BST з допустимим діапазоном [minValue, maxValue]
+static bool IsValidBstInRange(Node? root, long minValue, long maxValue)
+{
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
-bool is_valid_bst(Node* root) {
-    return is_valid_bst(root, LLONG_MIN, LLONG_MAX);
-}
-
-int main() {
-    // Дерево 1: коректне BST
-    //       50
-    //      /  \
-    //    30    70
-    //   / \   / \
-    //  20  40 60  80
-    Node* t1 = new Node(50);
-    t1->left = new Node(30);
-    t1->right = new Node(70);
-    t1->left->left = new Node(20);
-    t1->left->right = new Node(40);
-    t1->right->left = new Node(60);
-    t1->right->right = new Node(80);
-
-    cout << "Дерево 1: "
-         << (is_valid_bst(t1) ? "Коректне BST" : "Не BST") << endl;
-
-    // Дерево 2: НЕ коректне BST
-    //       50
-    //      /  \
-    //    30    70
-    //   / \
-    //  20  60  <-- 60 > 50, але знаходиться в лівому піддереві кореня
-    Node* t2 = new Node(50);
-    t2->left = new Node(30);
-    t2->right = new Node(70);
-    t2->left->left = new Node(20);
-    t2->left->right = new Node(60);
-
-    cout << "Дерево 2: "
-         << (is_valid_bst(t2) ? "Коректне BST" : "Не BST") << endl;
-
-    // Дерево 3: НЕ коректне BST
-    //       50
-    //      /  \
-    //    30    70
-    //         / \
-    //        40  80  <-- 40 < 50, але знаходиться в правому піддереві кореня
-    Node* t3 = new Node(50);
-    t3->left = new Node(30);
-    t3->right = new Node(70);
-    t3->right->left = new Node(40);
-    t3->right->right = new Node(80);
-
-    cout << "Дерево 3: "
-         << (is_valid_bst(t3) ? "Коректне BST" : "Не BST") << endl;
-
-    return 0;
+class Node(int data)
+{
+    public int Data { get; set; } = data;
+    public Node? Left { get; set; }
+    public Node? Right { get; set; }
 }
 ```
 
@@ -258,78 +239,78 @@ int main() {
 
 Реалізувати операцію видалення вузла з бінарного дерева пошуку з урахуванням трьох випадків:
 
-1. **Вузол-листок** — просто видалити
+1. **Вузол-листок** — просто видалити (прибрати посилання; пам'ять звільнить збирач сміття)
 2. **Вузол з одним нащадком** — замінити вузол його нащадком
 3. **Вузол з двома нащадками** — знайти inorder-наступника (найменший елемент у правому піддереві), скопіювати його значення та видалити наступника
 
 - **Бали:** 2
 - **Складність:** O(h), де h — висота дерева
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-using namespace std;
+```csharp
+Node? root = null;
+foreach (int v in new[] { 50, 30, 70, 20, 40, 60, 80 })
+    root = Insert(root, v);
 
-struct Node {
-    int data;
-    Node* left;
-    Node* right;
-    Node(int val) : data(val), left(nullptr), right(nullptr) {}
-};
+//         50
+//        /  \
+//      30    70
+//     / \   / \
+//    20  40 60  80
 
-Node* insert(Node* root, int val) {
+Console.Write("Початкове дерево: ");
+Inorder(root);
+Console.WriteLine();
+
+// Випадок 1: видалення листка (20)
+root = DeleteNode(root, 20);
+Console.Write("Після видалення 20 (листок): ");
+Inorder(root);
+Console.WriteLine();
+
+// Випадок 2: видалення вузла з одним нащадком (30 → має лише 40)
+root = DeleteNode(root, 30);
+Console.Write("Після видалення 30 (один нащадок): ");
+Inorder(root);
+Console.WriteLine();
+
+// Випадок 3: видалення вузла з двома нащадками (50 → наступник 60)
+root = DeleteNode(root, 50);
+Console.Write("Після видалення 50 (два нащадки): ");
+Inorder(root);
+Console.WriteLine();
+
+static Node Insert(Node? root, int value)
+{
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
-void inorder(Node* root) {
+static void Inorder(Node? root)
+{
     // Ваш код тут
 }
 
 // Знаходить вузол з мінімальним значенням у дереві
-Node* find_min(Node* root) {
+static Node FindMin(Node root)
+{
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 // Видаляє вузол зі значенням key з дерева
-Node* delete_node(Node* root, int key) {
+static Node? DeleteNode(Node? root, int key)
+{
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
-int main() {
-    Node* root = nullptr;
-    for (int v : {50, 30, 70, 20, 40, 60, 80})
-        root = insert(root, v);
-
-    //         50
-    //        /  \
-    //      30    70
-    //     / \   / \
-    //    20  40 60  80
-
-    cout << "Початкове дерево: ";
-    inorder(root);
-    cout << endl;
-
-    // Випадок 1: видалення листка (20)
-    root = delete_node(root, 20);
-    cout << "Після видалення 20 (листок): ";
-    inorder(root);
-    cout << endl;
-
-    // Випадок 2: видалення вузла з одним нащадком (30 → має лише 40)
-    root = delete_node(root, 30);
-    cout << "Після видалення 30 (один нащадок): ";
-    inorder(root);
-    cout << endl;
-
-    // Випадок 3: видалення вузла з двома нащадками (50 → наступник 60)
-    root = delete_node(root, 50);
-    cout << "Після видалення 50 (два нащадки): ";
-    inorder(root);
-    cout << endl;
-
-    return 0;
+class Node(int data)
+{
+    public int Data { get; set; } = data;
+    public Node? Left { get; set; }
+    public Node? Right { get; set; }
 }
 ```
 
@@ -355,80 +336,79 @@ int main() {
 
 ### Підказка
 
-Серіалізація: обхід дерева у префіксному порядку, записуючи значення вузлів через пробіл. Для `nullptr` записуйте `#`. Десеріалізація: зчитування токенів по одному з потоку та рекурсивна побудова дерева у тому ж порядку.
+Серіалізація: обхід дерева у префіксному порядку, записуючи значення вузлів через пробіл (зручно використовувати `StringBuilder` або `List<string>` + `string.Join`). Для `null` записуйте `#`. Десеріалізація: розбийте рядок на токени (`Split`), покладіть їх у `Queue<string>` і рекурсивно будуйте дерево у тому ж порядку, вилучаючи токени по одному через `Dequeue()`.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-#include <sstream>
-#include <string>
-using namespace std;
+```csharp
+Node? root = null;
+foreach (int v in new[] { 50, 30, 70, 20, 40, 60, 80 })
+    root = Insert(root, v);
 
-struct Node {
-    int data;
-    Node* left;
-    Node* right;
-    Node(int val) : data(val), left(nullptr), right(nullptr) {}
-};
+//         50
+//        /  \
+//      30    70
+//     / \   / \
+//    20  40 60  80
 
-Node* insert(Node* root, int val) {
+Console.Write("Оригінальне дерево (inorder): ");
+Inorder(root);
+Console.WriteLine();
+
+string data = Serialize(root);
+Console.WriteLine($"Серіалізовано: {data}");
+
+Node? restored = Deserialize(data);
+Console.Write("Відновлене дерево (inorder): ");
+Inorder(restored);
+Console.WriteLine();
+
+// Тест з порожнім деревом
+string emptyData = Serialize(null);
+Console.WriteLine($"Порожнє дерево серіалізовано: \"{emptyData}\"");
+
+Node? emptyRestored = Deserialize(emptyData);
+Console.Write("Відновлене порожнє дерево (inorder): ");
+Inorder(emptyRestored);
+Console.WriteLine("(порожньо)");
+
+static Node Insert(Node? root, int value)
+{
+    // Ваш код тут
+    throw new NotImplementedException();
+}
+
+static void Inorder(Node? root)
+{
     // Ваш код тут
 }
 
-void inorder(Node* root) {
+// Серіалізує дерево у рядок (префіксний обхід, "#" для null)
+static string Serialize(Node? root)
+{
     // Ваш код тут
-}
-
-// Серіалізує дерево у рядок (префіксний обхід, "#" для nullptr)
-string serialize(Node* root) {
-    // Ваш код тут
+    throw new NotImplementedException();
 }
 
 // Допоміжна функція для десеріалізації
-Node* deserialize_helper(istringstream& stream) {
+static Node? DeserializeHelper(Queue<string> tokens)
+{
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 // Відновлює дерево з рядка
-Node* deserialize(const string& data) {
-    istringstream stream(data);
-    return deserialize_helper(stream);
+static Node? Deserialize(string data)
+{
+    var tokens = new Queue<string>(data.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    return DeserializeHelper(tokens);
 }
 
-int main() {
-    Node* root = nullptr;
-    for (int v : {50, 30, 70, 20, 40, 60, 80})
-        root = insert(root, v);
-
-    //         50
-    //        /  \
-    //      30    70
-    //     / \   / \
-    //    20  40 60  80
-
-    cout << "Оригінальне дерево (inorder): ";
-    inorder(root);
-    cout << endl;
-
-    string data = serialize(root);
-    cout << "Серіалізовано: " << data << endl;
-
-    Node* restored = deserialize(data);
-    cout << "Відновлене дерево (inorder): ";
-    inorder(restored);
-    cout << endl;
-
-    // Тест з порожнім деревом
-    string empty_data = serialize(nullptr);
-    cout << "Порожнє дерево серіалізовано: \"" << empty_data << "\"" << endl;
-
-    Node* empty_restored = deserialize(empty_data);
-    cout << "Відновлене порожнє дерево (inorder): ";
-    inorder(empty_restored);
-    cout << "(порожньо)" << endl;
-
-    return 0;
+class Node(int data)
+{
+    public int Data { get; set; } = data;
+    public Node? Left { get; set; }
+    public Node? Right { get; set; }
 }
 ```
 

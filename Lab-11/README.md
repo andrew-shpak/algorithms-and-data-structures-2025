@@ -1,6 +1,6 @@
 # Лабораторна робота 11: Алгоритм Дейкстри
 
-## [IDE](https://onecompiler.com/cpp)
+## [IDE](https://onecompiler.com/csharp)
 
 ---
 
@@ -19,14 +19,14 @@
    - Підтримує як орієнтовані, так і неорієнтовані графи
 
 2. **Реалізація алгоритму Дейкстри (5 балів)**
-   - Реалізує функцію `dijkstra(graph, start)`, яка повертає найкоротші відстані від початкової вершини до всіх інших
-   - Використовує пріоритетну чергу (`priority_queue`) для ефективного вибору вершини з мінімальною відстанню
+   - Реалізує метод `Dijkstra(graph, start)`, яка повертає найкоротші відстані від початкової вершини до всіх інших
+   - Використовує пріоритетну чергу (`PriorityQueue<TElement, TPriority>`) для ефективного вибору вершини з мінімальною відстанню
    - Правильно ініціалізує відстані (0 для початкової вершини, нескінченність для інших)
    - Оновлює відстані до сусідніх вершин за принципом релаксації ребер
    - Коректно обробляє випадки, коли деякі вершини недосяжні
 
 3. **Відновлення шляху (2 бали)**
-   - Реалізує функцію для відновлення та виведення найкоротшого шляху від початкової вершини до заданої
+   - Реалізує метод для відновлення та виведення найкоротшого шляху від початкової вершини до заданої
    - Зберігає попередні вершини для кожної вершини в найкоротшому шляху
    - Виводить шлях у зрозумілому форматі (наприклад, "0 -> 2 -> 3 -> 4")
 
@@ -46,123 +46,132 @@
 
 **Складність:** O((V + E) log V), де V - кількість вершин, E - кількість ребер
 
-### Приклад `main`
+### Приклад `Main`
 
-```cpp
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <limits>
-#include <algorithm>
-using namespace std;
+```csharp
+using System.Text;
 
-// Структура для представлення ребра
-struct Edge {
-    
-};
- 
+// Запис для представлення ребра (вершина призначення, вага)
+public readonly record struct Edge(int To, int Weight);
 
-// Структура для пріоритетної черги (відстань, вершина)
-struct State {
-     
-};
+public static class Program
+{
+    private const int Inf = int.MaxValue;
 
-// Функція для виконання алгоритму Дейкстри
-vector<int> dijkstra(const Graph& graph, int start, vector<int>& parent) {
-      
-}
-
-// Функція для відновлення та виведення шляху
-void printPath(int start, int end, const vector<int>& parent) {
-    // Ваш код тут
-}
-
-// Функція для виведення результатів
-void printResults(int start, const vector<int>& dist, const vector<int>& parent) {
-    cout << "\nНайкоротші відстані від вершини " << start << ":\n";
-    cout << "Вершина\tВідстань\tШлях\n";
-    cout << "---------------------------------------\n";
-
-    for (int i = 0; i < dist.size(); i++) {
-        cout << i << "\t";
-        if (dist[i] == INF) {
-            cout << "INF\t\tНедосяжна";
-        } else {
-            cout << dist[i] << "\t\t";
-            printPath(start, i, parent);
+    // Створення графа з n вершинами (список суміжності)
+    public static List<List<Edge>> CreateGraph(int n)
+    {
+        var graph = new List<List<Edge>>(n);
+        for (int i = 0; i < n; i++)
+        {
+            graph.Add([]);
         }
-        cout << endl;
+        return graph;
     }
-}
 
-int main() {
-    // Граф:
-    //       1
-    //    /  |  \
-    //   4   2   3
-    //  /    |    \
-    // 0     |     4
-    //  \    |    /
-    //   7   1   5
-    //    \  |  /
-    //       2
-    //       |
-    //       2
-    //       |
-    //       3
+    // Метод для виконання алгоритму Дейкстри
+    // Пріоритетна черга: PriorityQueue<int, int> (вершина, відстань)
+    public static int[] Dijkstra(List<List<Edge>> graph, int start, out int[] parent)
+    {
+        // Ваш код тут
+    }
 
-    Graph graph1(5);
-    graph1[0].push_back(Edge(1, 4));
-    graph1[0].push_back(Edge(2, 7));
-    graph1[1].push_back(Edge(0, 4));
-    graph1[1].push_back(Edge(2, 2));
-    graph1[1].push_back(Edge(3, 3));
-    graph1[2].push_back(Edge(0, 7));
-    graph1[2].push_back(Edge(1, 2));
-    graph1[2].push_back(Edge(3, 2));
-    graph1[2].push_back(Edge(4, 1));
-    graph1[3].push_back(Edge(1, 3));
-    graph1[3].push_back(Edge(2, 2));
-    graph1[3].push_back(Edge(4, 5));
-    graph1[4].push_back(Edge(2, 1));
-    graph1[4].push_back(Edge(3, 5));
+    // Метод для відновлення та виведення шляху
+    public static void PrintPath(int start, int end, int[] parent)
+    {
+        // Ваш код тут
+    }
 
-    cout << "=== Приклад 1: Зв'язний граф ===";
-    vector<int> parent1;
-    vector<int> dist1 = dijkstra(graph1, 0, parent1);
-    printResults(0, dist1, parent1);
+    // Метод для виведення результатів
+    public static void PrintResults(int start, int[] dist, int[] parent)
+    {
+        Console.WriteLine($"\nНайкоротші відстані від вершини {start}:");
+        Console.WriteLine("Вершина\tВідстань\tШлях");
+        Console.WriteLine("---------------------------------------");
 
-    // Приклад 2: Граф з недосяжними вершинами
-    Graph graph2(6);
-    graph2[0].push_back(Edge(1, 2));
-    graph2[0].push_back(Edge(2, 4));
-    graph2[1].push_back(Edge(0, 2));
-    graph2[1].push_back(Edge(2, 1));
-    graph2[2].push_back(Edge(0, 4));
-    graph2[2].push_back(Edge(1, 1));
-    // Вершини 3, 4, 5 відключені
-    graph2[3].push_back(Edge(4, 2));
-    graph2[4].push_back(Edge(3, 2));
-    graph2[4].push_back(Edge(5, 3));
-    graph2[5].push_back(Edge(4, 3));
+        for (int i = 0; i < dist.Length; i++)
+        {
+            Console.Write($"{i}\t");
+            if (dist[i] == Inf)
+            {
+                Console.Write("INF\t\tНедосяжна");
+            }
+            else
+            {
+                Console.Write($"{dist[i]}\t\t");
+                PrintPath(start, i, parent);
+            }
+            Console.WriteLine();
+        }
+    }
 
-    cout << "\n\n=== Приклад 2: Граф з відключеними компонентами ===";
-    vector<int> parent2;
-    vector<int> dist2 = dijkstra(graph2, 0, parent2);
-    printResults(0, dist2, parent2);
+    public static void Main()
+    {
+        Console.OutputEncoding = Encoding.UTF8;
 
-    // Приклад 3: Простий ланцюг
-    Graph graph3(4);
-    graph3[0].push_back(Edge(1, 1));
-    graph3[1].push_back(Edge(2, 2));
-    graph3[2].push_back(Edge(3, 3));
+        // Граф:
+        //       1
+        //    /  |  \
+        //   4   2   3
+        //  /    |    \
+        // 0     |     4
+        //  \    |    /
+        //   7   1   5
+        //    \  |  /
+        //       2
+        //       |
+        //       2
+        //       |
+        //       3
 
-    cout << "\n\n=== Приклад 3: Простий орієнтований ланцюг ===";
-    vector<int> parent3;
-    vector<int> dist3 = dijkstra(graph3, 0, parent3);
-    printResults(0, dist3, parent3);
+        var graph1 = CreateGraph(5);
+        graph1[0].Add(new Edge(1, 4));
+        graph1[0].Add(new Edge(2, 7));
+        graph1[1].Add(new Edge(0, 4));
+        graph1[1].Add(new Edge(2, 2));
+        graph1[1].Add(new Edge(3, 3));
+        graph1[2].Add(new Edge(0, 7));
+        graph1[2].Add(new Edge(1, 2));
+        graph1[2].Add(new Edge(3, 2));
+        graph1[2].Add(new Edge(4, 1));
+        graph1[3].Add(new Edge(1, 3));
+        graph1[3].Add(new Edge(2, 2));
+        graph1[3].Add(new Edge(4, 5));
+        graph1[4].Add(new Edge(2, 1));
+        graph1[4].Add(new Edge(3, 5));
 
-    return 0;
+        Console.WriteLine("=== Приклад 1: Зв'язний граф ===");
+        int[] dist1 = Dijkstra(graph1, 0, out int[] parent1);
+        PrintResults(0, dist1, parent1);
+
+        // Приклад 2: Граф з недосяжними вершинами
+        var graph2 = CreateGraph(6);
+        graph2[0].Add(new Edge(1, 2));
+        graph2[0].Add(new Edge(2, 4));
+        graph2[1].Add(new Edge(0, 2));
+        graph2[1].Add(new Edge(2, 1));
+        graph2[2].Add(new Edge(0, 4));
+        graph2[2].Add(new Edge(1, 1));
+        // Вершини 3, 4, 5 відключені
+        graph2[3].Add(new Edge(4, 2));
+        graph2[4].Add(new Edge(3, 2));
+        graph2[4].Add(new Edge(5, 3));
+        graph2[5].Add(new Edge(4, 3));
+
+        Console.WriteLine("\n\n=== Приклад 2: Граф з відключеними компонентами ===");
+        int[] dist2 = Dijkstra(graph2, 0, out int[] parent2);
+        PrintResults(0, dist2, parent2);
+
+        // Приклад 3: Простий ланцюг
+        var graph3 = CreateGraph(4);
+        graph3[0].Add(new Edge(1, 1));
+        graph3[1].Add(new Edge(2, 2));
+        graph3[2].Add(new Edge(3, 3));
+
+        Console.WriteLine("\n\n=== Приклад 3: Простий орієнтований ланцюг ===");
+        int[] dist3 = Dijkstra(graph3, 0, out int[] parent3);
+        PrintResults(0, dist3, parent3);
+    }
 }
 ```
 

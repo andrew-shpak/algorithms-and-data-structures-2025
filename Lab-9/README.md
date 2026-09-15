@@ -12,121 +12,115 @@
 
 ### Вимоги
 
-- Створіть клас `AVLTree` з внутрішньою структурою вузла `Node`:
-  - Кожен вузол містить ключ (int), покажчики на лівого та правого нащадків, висоту
-- Реалізуйте метод `insert(int key)` з автоматичним балансуванням:
+- Створіть клас `AvlTree` та клас вузла `Node`:
+  - Кожен вузол містить ключ (int), посилання `Node?` на лівого та правого нащадків (пам'ять звільняє GC), висоту
+- Реалізуйте метод `Insert(int key)` з автоматичним балансуванням:
   - Використовуйте ліві та праві обертання (rotations)
   - Оновлюйте висоту вузлів після вставки
   - Застосовуйте обертання для підтримки AVL-властивості
-- Реалізуйте метод `bool is_balanced()` для перевірки збалансованості:
+- Реалізуйте метод `bool IsBalanced()` для перевірки збалансованості:
   - Для кожного вузла: |height(лівий) - height(правий)| ≤ 1
   - Повертає `true`, якщо дерево збалансоване, інакше `false`
-- Реалізуйте допоміжний метод `int height()` для обчислення висоти дерева
-- Реалізуйте метод `void print_tree()` для візуалізації структури дерева
+- Реалізуйте властивість `int Height` для обчислення висоти дерева
+- Реалізуйте метод `void PrintTree()` для візуалізації структури дерева
 - **Бали:** 10 балів
 - **Складність:**
   - Вставка: O(log n) завдяки збалансованості
   - Перевірка збалансованості: O(n), де n - кількість вузлів
   - Обчислення висоти: O(n)
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-#include <cmath>
-using namespace std;
+```csharp
+// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
+Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-struct Node {
-    int key;
-    Node* left;
-    Node* right;
-    int height;
+var tree = new AvlTree();
 
-    Node(int k) : key(k), left(nullptr), right(nullptr), height(1) {}
-};
+Console.WriteLine("=== ВСТАВКА ЕЛЕМЕНТІВ ===");
+int[] values = [10, 20, 30, 40, 50, 25];
 
-class AVLTree {
-private:
-    Node* root;
+foreach (int val in values)
+{
+    tree.Insert(val);
+    Console.WriteLine($"Вставлено: {val}");
+    Console.WriteLine($"Висота дерева: {tree.Height}");
+    Console.WriteLine($"Збалансоване: {(tree.IsBalanced() ? "Так" : "Ні")}");
+    Console.WriteLine();
+}
+
+Console.WriteLine("=== СТРУКТУРА ДЕРЕВА ===");
+tree.PrintTree();
+
+Console.WriteLine();
+Console.WriteLine("=== ФІНАЛЬНА ПЕРЕВІРКА ===");
+Console.WriteLine($"Загальна висота: {tree.Height}");
+Console.WriteLine($"Дерево збалансоване: {(tree.IsBalanced() ? "Так" : "Ні")}");
+
+public sealed class Node(int key)
+{
+    public int Key { get; } = key;
+    public Node? Left { get; set; }
+    public Node? Right { get; set; }
+    public int Height { get; set; } = 1;
+}
+
+public sealed class AvlTree
+{
+    private Node? _root;
+
+    public int Height => GetHeight(_root);
+
+    public void Insert(int key) => _root = InsertHelper(_root, key);
+
+    public bool IsBalanced() => IsBalancedHelper(_root, out _);
+
+    public void PrintTree()
+    {
+        // Ваш код тут
+    }
 
     // Отримати висоту вузла
-    int get_height(Node* node) {
+    private static int GetHeight(Node? node)
+    {
         // Ваш код тут
     }
 
     // Обчислити баланс-фактор вузла
-    int get_balance(Node* node) {
+    private static int GetBalance(Node? node)
+    {
         // Ваш код тут
     }
 
     // Праве обертання
-    Node* rotate_right(Node* y) {
+    private static Node RotateRight(Node y)
+    {
         // Ваш код тут
     }
 
     // Ліве обертання
-    Node* rotate_left(Node* x) {
+    private static Node RotateLeft(Node x)
+    {
         // Ваш код тут
     }
 
     // Вставка з балансуванням
-    Node* insert_helper(Node* node, int key) {
+    private static Node InsertHelper(Node? node, int key)
+    {
         // Ваш код тут
     }
 
     // Перевірка збалансованості
-    bool is_balanced_helper(Node* node, int& height) {
+    private static bool IsBalancedHelper(Node? node, out int height)
+    {
         // Ваш код тут
     }
 
     // Вивід дерева
-    void print_helper(Node* node, string indent, bool last) {
+    private static void PrintHelper(Node? node, string indent, bool last)
+    {
         // Ваш код тут
     }
-
-public:
-    AVLTree() : root(nullptr) {}
-
-    void insert(int key) {
-        root = insert_helper(root, key);
-    }
-
-    bool is_balanced() {
-        int height = 0;
-        return is_balanced_helper(root, height);
-    }
-
-    int height() {
-        return get_height(root);
-    }
-
-    void print_tree() {
-        // Ваш код тут
-    }
-};
-
-int main() {
-    AVLTree tree;
-
-    cout << "=== ВСТАВКА ЕЛЕМЕНТІВ ===" << endl;
-    int values[] = {10, 20, 30, 40, 50, 25};
-
-    for (int val : values) {
-        tree.insert(val);
-        cout << "Вставлено: " << val << endl;
-        cout << "Висота дерева: " << tree.height() << endl;
-        cout << "Збалансоване: " << (tree.is_balanced() ? "Так" : "Ні") << endl;
-        cout << endl;
-    }
-
-    cout << "=== СТРУКТУРА ДЕРЕВА ===" << endl;
-    tree.print_tree();
-
-    cout << "\n=== ФІНАЛЬНА ПЕРЕВІРКА ===" << endl;
-    cout << "Загальна висота: " << tree.height() << endl;
-    cout << "Дерево збалансоване: " << (tree.is_balanced() ? "Так" : "Ні") << endl;
-
-    return 0;
 }
 ```
 
@@ -161,10 +155,10 @@ int main() {
 === СТРУКТУРА ДЕРЕВА ===
         ┌── 50
     ┌── 40
-    │   └── 30
-┌── 25
-│   └── 20
-10
+30
+        ┌── 25
+    └── 20
+        └── 10
 
 === ФІНАЛЬНА ПЕРЕВІРКА ===
 Загальна висота: 3

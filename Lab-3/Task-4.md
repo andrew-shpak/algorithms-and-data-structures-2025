@@ -5,24 +5,23 @@
 замовлення та видалити (завершити) замовлення за номером столу.
 
 ## Вимоги
-- Структура `Order` з полями: `table_number`, `std::list<std::string> dishes`,
-  `status`.
+- Тип `Order` з властивостями: `TableNumber`, `LinkedList<string> Dishes`,
+  `Status`.
 - Клас `OrderBook` виконує лише додавання та видалення замовлень.
-- Набір меню: `std::unordered_set<std::string>` — перелік дозволених страв,
+- Набір меню: `HashSet<string>` — перелік дозволених страв,
   використовується для валідації кожного нового замовлення (ініціалізуйте його у
   зручний для вас спосіб).
 
 ## Необхідні методи
-```cpp
-class OrderBook {
-public:
-    bool add_order(Order order);         // false, якщо страва не з меню або стіл вже має активне замовлення
-    bool remove_order(int table_number); // false, якщо замовлення не знайдено
+```csharp
+public class OrderBook
+{
+    private readonly LinkedList<Order> _orders = new();
+    private readonly HashSet<string> _menuItems;
 
-private:
-    std::list<Order> orders_;
-    std::unordered_set<std::string> menu_items_;
-};
+    public bool AddOrder(Order order);        // false, якщо страва не з меню або стіл вже має активне замовлення
+    public bool RemoveOrder(int tableNumber); // false, якщо замовлення не знайдено
+}
 ```
 
 ## Приклад взаємодії
@@ -45,4 +44,4 @@ ERROR: order not found
 ```
 
 > Для перевірки актуального списку замовлень використовуйте власні інструменти
-> налагодження, оскільки публічний інтерфейс містить лише методи add/remove.
+> налагодження, оскільки публічний інтерфейс містить лише методи `AddOrder`/`RemoveOrder`.

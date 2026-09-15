@@ -5,21 +5,20 @@
 видалити контакт за ім'ям.
 
 ## Вимоги
-- Клас `Contact` з полями: `name`, `phone`, `email`, `std::list<std::string> tags`.
+- Клас `Contact` з властивостями: `Name`, `Phone`, `Email`, `LinkedList<string> Tags`.
 - Клас `ContactBook` обмежений операціями додавання й видалення.
-- Унікальні імена контролюються внутрішнім індексом `std::unordered_set<std::string>`.
+- Унікальні імена контролюються внутрішнім індексом `HashSet<string>`.
 
 ## Необхідні методи
-```cpp
-class ContactBook {
-public:
-    bool add_contact(Contact contact);            // false, якщо ім'я вже зайняте
-    bool remove_contact(const std::string &name); // false, якщо контакт не знайдено
+```csharp
+public class ContactBook
+{
+    private readonly LinkedList<Contact> _contacts = new();
+    private readonly HashSet<string> _nameIndex = new();
 
-private:
-    std::list<Contact> contacts_;
-    std::unordered_set<std::string> name_index_;
-};
+    public bool AddContact(Contact contact); // false, якщо ім'я вже зайняте
+    public bool RemoveContact(string name);  // false, якщо контакт не знайдено
+}
 ```
 
 ## Приклад взаємодії

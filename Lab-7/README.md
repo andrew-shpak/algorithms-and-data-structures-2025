@@ -1,50 +1,37 @@
-# Lab 7 - Хеш-таблиці та unordered_map
+# Lab 7 - Хеш-таблиці та Dictionary
 
 ## Завдання 1: Підрахунок частоти слів з тексту
 
 ### Мета
-Реалізувати програму для підрахунку частоти появи кожного слова у тексті, використовуючи `unordered_map`. Навчитись ефективно працювати з хеш-таблицями для агрегації даних. Має бути викоистано лише 1 проект. А також має бути використано switch case для вибору завдань у main.
+Реалізувати програму для підрахунку частоти появи кожного слова у тексті, використовуючи `Dictionary<TKey, TValue>`. Навчитись ефективно працювати з хеш-таблицями для агрегації даних. Має бути викоистано лише 1 проект. А також має бути використано `switch` для вибору завдань у `Program.cs` (запуск через `dotnet run`).
 
 ### Вимоги
-- Створіть функцію `count_words(text)` що повертає `unordered_map<string, int>`.
+- Створіть метод `CountWords(text)` що повертає `Dictionary<string, int>`.
 - Розділіть текст на слова, підрахуйте кількість появ кожного слова.
 - Виведіть слова та їх частоту, відсортовані за спаданням частоти.
 - Ігноруйте регістр (приведіть всі слова до нижнього регістру).
 - **Бали:** 3.
 - **Складність:** O(n) для підрахунку, O(m log m) для сортування результатів, де n - кількість слів, m - кількість унікальних слів.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-#include <sstream>
-#include <unordered_map>
-#include <vector>
-#include <algorithm>
-#include <cctype>
-using namespace std;
-
-// Функція для приведення рядка до нижнього регістру
-string to_lower(string s) {
-      // Ваш код тут
-}
+```csharp
+// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
 
 // Функція для підрахунку частоти слів у тексті
-unordered_map<string, int> count_words(const string &text) {
-    // Ваш код тут
+static Dictionary<string, int> CountWords(string text)
+{
+    // Ваш код тут (використайте ToLowerInvariant() для ігнорування регістру)
 }
 
-int main() {
-    string text = "Hello world hello programming "
-                  "Programming is fun "
-                  "World of programming";
+string text = "Hello world hello programming " +
+              "Programming is fun " +
+              "World of programming";
 
-    auto word_count = count_words(text);
+Dictionary<string, int> wordCount = CountWords(text);
 
-
-    cout << "=== ЧАСТОТА СЛІВ ===\n";
-    return 0;
-}
+Console.WriteLine("=== ЧАСТОТА СЛІВ ===");
+// Ваш код тут: відсортуйте за спаданням частоти (при рівній частоті - за алфавітом)
 ```
 
 ### Приклад запуску
@@ -64,42 +51,34 @@ of: 1
 ## Завдання 2: Групування елементів за частотою
 
 ### Мета
-Використати `unordered_map` для підрахунку частоти елементів масиву та групування їх за кількістю появ. Навчитись працювати з вкладеними структурами даних.
+Використати `Dictionary<TKey, TValue>` для підрахунку частоти елементів масиву та групування їх за кількістю появ. Навчитись працювати з вкладеними структурами даних.
 
 ### Вимоги
-- Створіть функцію `group_by_frequency(arr)` що повертає `unordered_map<int, vector<int>>`.
-- Ключ - частота появи, значення - вектор елементів з такою частотою.
-- Наприклад: якщо 5 з'являється 3 рази, а 7 також 3 рази, то `result[3] = {5, 7}`.
+- Створіть метод `GroupByFrequency(arr)` що повертає `Dictionary<int, List<int>>`.
+- Ключ - частота появи, значення - список (`List<int>`) елементів з такою частотою.
+- Наприклад: якщо 5 з'являється 3 рази, а 7 також 3 рази, то `result[3] = [5, 7]`.
 - **Бали:** 2.
 - **Складність:** O(n) для підрахунку + O(m) для групування, де m - кількість унікальних елементів.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-#include <vector>
-#include <unordered_map>
-using namespace std;
+```csharp
+// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
 
-unordered_map<int, vector<int>> group_by_frequency(const vector<int> &arr) {
+static Dictionary<int, List<int>> GroupByFrequency(int[] arr)
+{
     // Ваш код тут
 }
 
-int main() {
-    vector<int> arr = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5};
+int[] arr = [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5];
 
-    cout << "Початковий масив: ";
-    for (int num : arr) {
-        cout << num << " ";
-    }
-    cout << "\n\n";
+Console.WriteLine($"Початковий масив: {string.Join(" ", arr)}");
+Console.WriteLine();
 
-    auto groups = group_by_frequency(arr);
+Dictionary<int, List<int>> groups = GroupByFrequency(arr);
 
-    cout << "=== ГРУПУВАННЯ ЗА ЧАСТОТОЮ ===\n";
-     
-    return 0;
-}
+Console.WriteLine("=== ГРУПУВАННЯ ЗА ЧАСТОТОЮ ===");
+// Ваш код тут: виведіть групи за зростанням частоти
 ```
 
 ### Приклад запуску
@@ -119,67 +98,52 @@ int main() {
 ## Завдання 3: Перетин та об'єднання масивів
 
 ### Мета
-Використати `unordered_set` для знаходження перетину (спільних елементів) та об'єднання (всіх унікальних елементів) двох масивів. Навчитись застосовувати операції над множинами за допомогою хеш-таблиць.
+Використати `HashSet<T>` для знаходження перетину (спільних елементів) та об'єднання (всіх унікальних елементів) двох масивів. Навчитись застосовувати операції над множинами за допомогою хеш-таблиць.
 
 ### Вимоги
-- Створіть функцію `find_intersection(arr1, arr2)` що повертає `vector<int>` зі спільними елементами.
-- Створіть функцію `find_union(arr1, arr2)` що повертає `vector<int>` з усіма унікальними елементами.
-- Використайте `unordered_set` для ефективної перевірки наявності елементів.
+- Створіть метод `FindIntersection(arr1, arr2)` що повертає `List<int>` зі спільними елементами.
+- Створіть метод `FindUnion(arr1, arr2)` що повертає `List<int>` з усіма унікальними елементами.
+- Використайте `HashSet<int>` для ефективної перевірки наявності елементів.
 - Кожен елемент має з'явитись у результаті лише один раз (навіть якщо він повторюється у вхідних масивах).
 - **Бали:** 3.
 - **Складність:** O(n + m) для обох операцій, де n і m - розміри масивів.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
-```cpp
-#include <iostream>
-#include <vector>
-#include <unordered_set>
-#include <algorithm>
-using namespace std;
+```csharp
+// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
 
-vector<int> find_intersection(const vector<int> &arr1, const vector<int> &arr2) {
+static List<int> FindIntersection(int[] arr1, int[] arr2)
+{
     // Ваш код тут
 }
 
-vector<int> find_union(const vector<int> &arr1, const vector<int> &arr2) {
+static List<int> FindUnion(int[] arr1, int[] arr2)
+{
     // Ваш код тут
 }
 
-int main() {
-    vector<int> arr1 = {1, 2, 2, 3, 4, 5};
-    vector<int> arr2 = {3, 4, 4, 5, 6, 7};
+int[] arr1 = [1, 2, 2, 3, 4, 5];
+int[] arr2 = [3, 4, 4, 5, 6, 7];
 
-    cout << "Масив 1: ";
-    for (int num : arr1) {
-        cout << num << " ";
-    }
-    cout << "\n";
+Console.WriteLine($"Масив 1: {string.Join(" ", arr1)}");
+Console.WriteLine($"Масив 2: {string.Join(" ", arr2)}");
+Console.WriteLine();
 
-    cout << "Масив 2: ";
-    for (int num : arr2) {
-        cout << num << " ";
-    }
-    cout << "\n\n";
+// Перетин
+List<int> intersection = FindIntersection(arr1, arr2);
+// Ваш код тут
 
-    // Перетин
-    vector<int> intersection = find_intersection(arr1, arr2);
-    // Ваш код тут
+Console.WriteLine("=== ПЕРЕТИН (спільні елементи) ===");
+// Ваш код тут
+Console.WriteLine();
 
-    cout << "=== ПЕРЕТИН (спільні елементи) ===\n";
-    // Ваш код тут
-    cout << "\n\n";
+// Об'єднання
+List<int> unionResult = FindUnion(arr1, arr2);
+// Ваш код тут
 
-    // Об'єднання
-    vector<int> union_result = find_union(arr1, arr2);
-    // Ваш код тут
-
-    cout << "=== ОБ'ЄДНАННЯ (всі унікальні) ===\n";
-    // Ваш код тут
-    cout << "\n";
-
-    return 0;
-}
+Console.WriteLine("=== ОБ'ЄДНАННЯ (всі унікальні) ===");
+// Ваш код тут
 ```
 
 ### Приклад запуску
@@ -196,8 +160,8 @@ int main() {
 ```
 
 ### Підказки
-- Для перетину: додайте елементи першого масиву в `unordered_set`, потім перевіряйте елементи другого масиву на наявність у цій множині.
-- Для об'єднання: додайте всі елементи обох масивів у `unordered_set` (автоматично видаляться дублікати), потім перетворіть у `vector`.
+- Для перетину: додайте елементи першого масиву в `HashSet<int>`, потім перевіряйте елементи другого масиву на наявність у цій множині.
+- Для об'єднання: додайте всі елементи обох масивів у `HashSet<int>` (автоматично видаляться дублікати), потім перетворіть у `List<int>` (наприклад, `[.. set]`).
 
 ---
 

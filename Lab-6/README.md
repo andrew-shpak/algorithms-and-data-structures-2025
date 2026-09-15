@@ -2,131 +2,103 @@
 
 ## Приклад розв'язання (на основі Practise-2)
 
-```cpp
-#include <iostream>   // cout
-#include <fstream>    // ifstream
-#include <sstream>    // stringstream
-#include <vector>     // vector
-#include <algorithm>  // sort, min
-#include <iomanip>    // fixed, setprecision
-using namespace std;
+```csharp
+using System.Globalization; // CultureInfo.InvariantCulture
 
-// Структура для зберігання даних студента
-struct Student {
-    string name;               // Ім'я студента
-    int age;                   // Вік студента
-    vector<double> grades;     // Оцінки студента
-    int course;                // Курс навчання
+List<Student> students = ReadCsv("students.csv");
 
-    // Метод для обчислення середнього балу
-    double getAverage() const {
-        double sum = 0;
-        for (double g : grades) {
-            sum += g;
-        }
-        return sum / grades.size();
-    }
-};
+if (students.Count == 0)
+{
+    Console.WriteLine("Помилка: файл не знайдено");
+    return 1;
+}
 
-// Функція для читання CSV файлу та парсингу даних студентів
-vector<Student> readCSV(const string& filename) {
-    vector<Student> students;
-    ifstream file(filename);
-    if (!file.is_open()) {
-        return students;  // Повертаємо порожній вектор при помилці
+DisplayRecords(students);
+DisplayAverages(students);
+DisplayTop(students, 3, true);
+DisplayTop(students, 3, false);
+
+return 0;
+
+// Метод для читання CSV файлу та парсингу даних студентів
+static List<Student> ReadCsv(string fileName)
+{
+    var students = new List<Student>();
+    if (!File.Exists(fileName))
+    {
+        return students; // Повертаємо порожній список при помилці
     }
 
-    string line;
-    getline(file, line);  // Пропускаємо заголовок
-
-    // Читаємо кожен рядок файлу
-    while (getline(file, line)) {
-        if (line.empty()) {
-            continue;  // Пропускаємо порожні рядки
+    // Читаємо кожен рядок файлу, пропускаючи заголовок
+    foreach (string line in File.ReadLines(fileName).Skip(1))
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            continue; // Пропускаємо порожні рядки
         }
 
-        Student s;
-        stringstream ss(line);
-        string field;
+        // Рядок виду: "Ім'я",вік,"оцінка,оцінка,...",курс
+        // Розбиття за лапками: ["", ім'я, ",вік,", оцінки, ",курс"]
+        string[] parts = line.Split('"');
 
-        // Парсинг імені (в лапках)
-        getline(ss, field, '"');
-        getline(ss, s.name, '"');
-        getline(ss, field, ',');
+        string name = parts[1];                       // Ім'я (в лапках)
+        int age = int.Parse(parts[2].Trim(','));      // Вік
+        List<double> grades = parts[3]                // Оцінки (в лапках, через кому)
+            .Split(',')
+            .Select(g => double.Parse(g, CultureInfo.InvariantCulture))
+            .ToList();
+        int course = int.Parse(parts[4].Trim(','));   // Курс
 
-        // Парсинг віку
-        getline(ss, field, ',');
-        s.age = stoi(field);
-
-        // Парсинг оцінок (в лапках, через кому)
-        getline(ss, field, '"');
-        getline(ss, field, '"');
-        stringstream gradeStream(field);
-        string grade;
-        while (getline(gradeStream, grade, ',')) {
-            s.grades.push_back(stod(grade));
-        }
-
-        // Парсинг курсу
-        getline(ss, field, ',');
-        getline(ss, field);
-        s.course = stoi(field);
-
-        students.push_back(s);
+        students.Add(new Student(name, age, grades, course));
     }
     return students;
 }
 
-// Функція для виведення всіх записів студентів
-void displayRecords(const vector<Student>& students) {
-    cout << "\n=== ВСІ ЗАПИСИ СТУДЕНТІВ ===\n";
-    for (const auto& s : students) {
-        cout << "Ім'я: " << s.name << ", Вік: " << s.age
-             << ", Курс: " << s.course << "\n";
+// Метод для виведення всіх записів студентів
+static void DisplayRecords(List<Student> students)
+{
+    Console.WriteLine("\n=== ВСІ ЗАПИСИ СТУДЕНТІВ ===");
+    foreach (var s in students)
+    {
+        Console.WriteLine($"Ім'я: {s.Name}, Вік: {s.Age}, Курс: {s.Course}");
     }
 }
 
-// Функція для виведення середніх балів всіх студентів
-void displayAverages(const vector<Student>& students) {
-    cout << "\n=== СЕРЕДНІ БАЛИ ===\n";
-    for (const auto& s : students) {
-        cout << s.name << ". Середній бал: "
-             << fixed << setprecision(1) << s.getAverage() << "\n";
+// Метод для виведення середніх балів всіх студентів
+static void DisplayAverages(List<Student> students)
+{
+    Console.WriteLine("\n=== СЕРЕДНІ БАЛИ ===");
+    foreach (var s in students)
+    {
+        Console.WriteLine($"{s.Name}. Середній бал: {s.Average.ToString("F1", CultureInfo.InvariantCulture)}");
     }
 }
 
-// Функція для виведення топ N студентів (найвищі або найнижчі бали)
-void displayTop(vector<Student> students, int n, bool highest) {
-    // Сортування студентів за середнім балом використовуючи std::sort
-    sort(students.begin(), students.end(), [highest](const Student& a, const Student& b) {
-        double avgA = a.getAverage(), avgB = b.getAverage();
-        if (avgA != avgB) {
-            return highest ? avgA > avgB : avgA < avgB;  // За балом
-        }
-        return a.name < b.name;  // За ім'ям при однакових балах
+// Метод для виведення топ N студентів (найвищі або найнижчі бали)
+static void DisplayTop(List<Student> students, int n, bool highest)
+{
+    // Сортування копії списку за середнім балом (List<T>.Sort з компаратором)
+    var sorted = new List<Student>(students);
+    sorted.Sort((a, b) =>
+    {
+        int byAverage = highest
+            ? b.Average.CompareTo(a.Average)  // За балом (спадання)
+            : a.Average.CompareTo(b.Average); // За балом (зростання)
+        return byAverage != 0 ? byAverage : string.CompareOrdinal(a.Name, b.Name); // За ім'ям при однакових балах
     });
 
-    cout << "\n=== ТОП " << n << (highest ? " НАЙВИЩІ" : " НАЙНИЖЧІ") << " БАЛИ ===\n";
-    // Каст (int) потрібен для сумісності типів: n має тип int, students.size() повертає size_t
-    for (int i = 0; i < min(n, (int)students.size()); i++) {
-        cout << (i + 1) << ". " << students[i].name << " - "
-             << fixed << setprecision(1) << students[i].getAverage() << "\n";
+    Console.WriteLine($"\n=== ТОП {n}{(highest ? " НАЙВИЩІ" : " НАЙНИЖЧІ")} БАЛИ ===");
+    // Math.Min, щоб не вийти за межі списку, якщо студентів менше ніж n
+    for (int i = 0; i < Math.Min(n, sorted.Count); i++)
+    {
+        Console.WriteLine($"{i + 1}. {sorted[i].Name} - {sorted[i].Average.ToString("F1", CultureInfo.InvariantCulture)}");
     }
 }
 
-int main() {
-    vector<Student> students = readCSV("students.csv");
-
-    if (students.empty()) {
-        cout << "Помилка: файл не знайдено\n";
-        return 1;
-    }
-
-    displayRecords(students);
-    displayAverages(students);
-    displayTop(students, 3, true);
-    displayTop(students, 3, false);
-
-    return 0;
+// Запис для зберігання даних студента
+record Student(string Name, int Age, List<double> Grades, int Course)
+{
+    // Властивість для обчислення середнього балу
+    public double Average => Grades.Average();
 }
 ```
