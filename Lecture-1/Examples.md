@@ -13,9 +13,11 @@
 8. [Винятки та LINQ](#8-винятки-та-linq)
 9. [Алгоритми: O(n) проти O(log n)](#9-алгоритми-on-проти-olog-n)
 10. [Форматування та стиль коду](#10-форматування-та-стиль-коду)
-11. [15 сучасних можливостей C#](#11-15-сучасних-можливостей-c)
-12. [Підсумки](#12-підсумки)
-13. [Питання для самоперевірки](#13-питання-для-самоперевірки)
+11. [Робота з файлами](#11-робота-з-файлами)
+12. [Власні колекції: мінімальні реалізації](#12-власні-колекції-мінімальні-реалізації)
+13. [15 сучасних можливостей C#](#13-15-сучасних-можливостей-c)
+14. [Підсумки](#14-підсумки)
+15. [Питання для самоперевірки](#15-питання-для-самоперевірки)
 
 ---
 
@@ -588,10 +590,776 @@ dotnet format --verify-no-changes    # перевірка в CI: помилка,
 
 ---
 
-## 11. 15 сучасних можливостей C#
+## 11. Робота з файлами
+Простір імен `System.IO` (підключений неявно): `Path` — робота зі шляхами, `File`/`Directory` — операції над файлами й папками, `Stream*` — потокове читання. Кожен приклад створює власні файли в `Path.GetTempPath()`, тому запускається окремо.
+
+### 11.1. Шляхи: `Path` і поточна папка
+Шляхи **ніколи не склеюють вручну** через `+ "/"` — роздільник різний у Windows (`\`) і macOS/Linux (`/`). Відносний шлях рахується від **поточної робочої папки** процесу: для `dotnet run` це папка проєкту, а при запуску `.exe` з іншого місця — зовсім інша папка. Для файлів, що постачаються разом із програмою, використовуйте `AppContext.BaseDirectory`.
+
+```csharp
+string dataDir = Path.Combine(Path.GetTempPath(), "lec1-demo", "data"); // Combine сам ставить / (macOS, Linux) або \ (Windows)
+string csvPath = Path.Combine(dataDir, "students.csv");
+Console.WriteLine($"Ім'я файлу: {Path.GetFileName(csvPath)}");                    // students.csv
+Console.WriteLine($"Без розширення: {Path.GetFileNameWithoutExtension(csvPath)}"); // students
+Console.WriteLine($"Розширення: {Path.GetExtension(csvPath)}");                    // .csv — разом із крапкою
+Console.WriteLine($"Папка: {Path.GetFileName(Path.GetDirectoryName(csvPath))}");   // data
+Console.WriteLine($"Нове розширення: {Path.GetFileName(Path.ChangeExtension(csvPath, ".json"))}");
+Console.WriteLine($"Абсолютний? {Path.IsPathRooted(csvPath)} / {Path.IsPathRooted("data/input.txt")}");
+// AppContext.BaseDirectory — папка зі зібраною програмою (…/bin/Debug/net10.0/), не залежить від місця запуску
+// Environment.CurrentDirectory — робоча папка процесу; для `dotnet run` це папка проєкту (де .csproj)
+Console.WriteLine($"BaseDirectory всередині bin: {AppContext.BaseDirectory.Contains("bin")}");
+string relative = Path.GetFullPath("data/input.txt");                             // відносні шляхи резолвляться від CurrentDirectory
+Console.WriteLine($"Відносний шлях — від поточної папки: {relative.StartsWith(Environment.CurrentDirectory)}");
+// Надійно для файлів, які копіюються разом із програмою (<CopyToOutputDirectory> у .csproj):
+string shipped = Path.Combine(AppContext.BaseDirectory, "data", "input.txt");
+Console.WriteLine($"Файл поруч із .dll: {Path.GetFileName(shipped)}");
+```
+
+**Приклад запуску:**
+```
+Ім'я файлу: students.csv
+Без розширення: students
+Розширення: .csv
+Папка: data
+Нове розширення: students.json
+Абсолютний? True / False
+BaseDirectory всередині bin: True
+Відносний шлях — від поточної папки: True
+Файл поруч із .dll: input.txt
+```
+
+### 11.2. Файли й папки: існування, створення, видалення, перелік
+`File`/`Directory` — статичні методи для операцій зі шляхами; `FileInfo`/`DirectoryInfo` — об'єкти з метаданими (розмір, дата).
+
+```csharp
+string root = Path.Combine(Path.GetTempPath(), "lec1-demo", "dirs");
+if (Directory.Exists(root)) Directory.Delete(root, recursive: true); // recursive: true — разом із вмістом
+Directory.CreateDirectory(Path.Combine(root, "sub"));  // створює всі проміжні папки; якщо вже є — не помилка
+File.WriteAllText(Path.Combine(root, "a.txt"), "A");
+File.WriteAllText(Path.Combine(root, "b.csv"), "B");
+File.WriteAllText(Path.Combine(root, "sub", "c.txt"), "C");
+Console.WriteLine($"a.txt існує: {File.Exists(Path.Combine(root, "a.txt"))}, x.txt існує: {File.Exists(Path.Combine(root, "x.txt"))}");
+Console.WriteLine($"sub — папка: {Directory.Exists(Path.Combine(root, "sub"))}, sub — файл: {File.Exists(Path.Combine(root, "sub"))}");
+// EnumerateFiles повертає шляхи ліниво (по одному), GetFiles — одразу весь масив; порядок не гарантовано → Order()
+foreach (string f in Directory.EnumerateFiles(root, "*.txt").Order())                          // лише верхній рівень
+    Console.WriteLine($"  верхній рівень: {Path.GetFileName(f)}");
+foreach (string f in Directory.EnumerateFiles(root, "*.txt", SearchOption.AllDirectories).Order()) // з підпапками
+    Console.WriteLine($"  рекурсивно: {Path.GetRelativePath(root, f)}");
+File.Copy(Path.Combine(root, "a.txt"), Path.Combine(root, "a-copy.txt"), overwrite: true);
+File.Move(Path.Combine(root, "b.csv"), Path.Combine(root, "sub", "b.csv"));   // переміщення = перейменування
+File.Delete(Path.Combine(root, "a.txt"));                                     // неіснуючий файл — не помилка
+var info = new FileInfo(Path.Combine(root, "a-copy.txt"));                    // FileInfo — метадані файлу
+Console.WriteLine($"{info.Name}: {info.Length} байт");
+Console.WriteLine($"Файлів усього: {Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories).Count()}");
+```
+
+**Приклад запуску:**
+```
+a.txt існує: True, x.txt існує: False
+sub — папка: True, sub — файл: False
+  верхній рівень: a.txt
+  рекурсивно: a.txt
+  рекурсивно: sub/c.txt
+a-copy.txt: 1 байт
+Файлів усього: 3
+```
+
+### 11.3. Увесь файл одразу: `ReadAllText`, `WriteAllLines`, кодування
+Найпростіший спосіб для **невеликих** файлів. За замовчуванням .NET пише в UTF-8 (без BOM); `Encoding.UTF8` явно додає BOM — так Блокнот у Windows точно розпізнає кирилицю.
+
+```csharp
+using System.Text;
+string dir = Path.Combine(Path.GetTempPath(), "lec1-demo");
+Directory.CreateDirectory(dir);
+string path = Path.Combine(dir, "notes.txt");
+File.WriteAllText(path, "Привіт, файли!\n", Encoding.UTF8);          // створює або ПЕРЕЗАПИСУЄ файл
+File.AppendAllText(path, "Другий рядок\n", Encoding.UTF8);           // дописує в кінець (створює, якщо немає)
+string text = File.ReadAllText(path, Encoding.UTF8);                 // весь файл — один string
+Console.Write(text);
+Console.WriteLine($"Символів: {text.Length}, байт на диску: {new FileInfo(path).Length}"); // кирилиця в UTF-8 — 2 байти, + 3 байти BOM
+string[] lines = ["Олена;95", "Андрій;87", "Ірина;78"];
+string listPath = Path.Combine(dir, "scores.txt");
+File.WriteAllLines(listPath, lines);                                 // кожен елемент — окремий рядок; UTF-8 за замовчуванням
+string[] back = File.ReadAllLines(listPath);                         // масив рядків без символів \n
+Console.WriteLine($"Рядків: {back.Length}, перший: {back[0]}");
+// Помилка кодування: ASCII не має кирилиці — кожен символ замінюється на '?'
+File.WriteAllText(Path.Combine(dir, "ascii.txt"), "Привіт", Encoding.ASCII);
+Console.WriteLine($"ASCII: {File.ReadAllText(Path.Combine(dir, "ascii.txt"))}");
+```
+
+**Приклад запуску:**
+```
+Привіт, файли!
+Другий рядок
+Символів: 28, байт на диску: 53
+Рядків: 3, перший: Олена;95
+ASCII: ??????
+```
+
+### 11.4. Великі файли рядок за рядком: `ReadLines`, `StreamReader`, `StreamWriter`
+`File.ReadAllLines` завантажує **весь** файл у пам'ять (гігабайтний лог — гігабайти RAM), а `File.ReadLines` читає **ліниво**. Потоки (`Stream*`) тримають відкритий дескриптор файлу та буфер — їх **обов'язково** звільняють через `using`: інакше файл лишається заблокованим, а останні записані дані можуть не потрапити на диск.
+
+```csharp
+string path = Path.Combine(Path.GetTempPath(), "lec1-demo", "big.log");
+Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+// StreamWriter: пише в буфер у пам'яті і скидає на диск частинами
+using (var writer = new StreamWriter(path))                   // using-блок: Dispose() викличеться навіть при винятку
+{
+    for (int i = 1; i <= 100_000; i++)
+        writer.WriteLine(i % 1000 == 0 ? $"{i};ERROR;disk full" : $"{i};INFO;ok");
+}                                                             // тут буфер скинуто, файл закрито — інакше кінець файлу може загубитись
+// File.ReadLines — ЛІНИВО: у пам'яті одночасно лише поточний рядок; ReadAllLines завантажив би всі 100 000
+int errors = File.ReadLines(path).Count(line => line.Contains(";ERROR;"));
+string firstError = File.ReadLines(path).First(line => line.Contains("ERROR")); // First зупиняє читання на 1000-му рядку
+Console.WriteLine($"Помилок: {errors}, перша: {firstError}");
+// StreamReader вручну: ReadLine() повертає null в кінці файлу
+using var reader = new StreamReader(path);                    // using var: Dispose() наприкінці області видимості (методу)
+int count = 0;
+string? line;
+while ((line = reader.ReadLine()) is not null)
+{
+    count++;
+}
+Console.WriteLine($"Прочитано рядків: {count}");
+```
+
+**Приклад запуску:**
+```
+Помилок: 100, перша: 1000;ERROR;disk full
+Прочитано рядків: 100000
+```
+
+### 11.5. CSV: розбір і запис
+CSV — текст, де колонки розділені комою. Правила надійного розбору: пропустити заголовок, перевірити кількість колонок, парсити числа через `TryParse` з `CultureInfo.InvariantCulture` і **пропускати** погані рядки, а не падати. `Split(',')` не впорається з полями в лапках (`"Шевченко, Тарас"`) — у реальних проєктах беріть бібліотеку **CsvHelper**.
+
+```csharp
+using System.Globalization;
+string dir = Path.Combine(Path.GetTempPath(), "lec1-demo");
+Directory.CreateDirectory(dir);
+string input = Path.Combine(dir, "grades.csv");
+File.WriteAllLines(input,
+[
+    "Name,Age,Score",          // заголовок
+    "Olena,19,95.5",
+    "Andrii,twenty,87.0",      // поганий вік
+    "Iryna,20,78.25",
+    "",                        // порожній рядок
+    "Taras,21"                 // бракує колонки
+]);
+var students = new List<Student>();
+int lineNo = 1;
+foreach (string line in File.ReadLines(input).Skip(1))             // Skip(1) — пропускаємо заголовок
+{
+    lineNo++;
+    if (string.IsNullOrWhiteSpace(line)) continue;
+    string[] cols = line.Split(',');
+    if (cols.Length != 3)
+    {
+        Console.WriteLine($"Рядок {lineNo}: очікували 3 колонки, отримали {cols.Length}");
+        continue;
+    }
+    // TryParse замість Parse: поганий рядок не "валить" програму; InvariantCulture — завжди крапка як роздільник
+    if (!int.TryParse(cols[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int age) ||
+        !double.TryParse(cols[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double score))
+    {
+        Console.WriteLine($"Рядок {lineNo}: некоректні числа — пропускаємо");
+        continue;
+    }
+    students.Add(new Student(cols[0].Trim(), age, score));
+}
+Console.WriteLine($"Завантажено: {students.Count}, середній бал: {students.Average(s => s.Score).ToString("F2", CultureInfo.InvariantCulture)}");
+// Запис CSV: число форматуємо з InvariantCulture, інакше в uk-UA вийде "95,5" і зламає колонки
+string output = Path.Combine(dir, "top.csv");
+IEnumerable<string> rows = students
+    .Where(s => s.Score >= 80)
+    .Select(s => string.Join(",", s.Name, s.Age, s.Score.ToString(CultureInfo.InvariantCulture)));
+File.WriteAllLines(output, ["Name,Age,Score", .. rows]);
+Console.Write(File.ReadAllText(output));
+// Чому культура важлива: у uk-UA десятковий роздільник — кома
+var uk = new CultureInfo("uk-UA");
+Console.WriteLine($"uk-UA: {95.5.ToString(uk)}; \"95.5\" як uk-UA розпізнано: {double.TryParse("95.5", NumberStyles.Float, uk, out _)}");
+public record Student(string Name, int Age, double Score);
+```
+
+**Приклад запуску:**
+```
+Рядок 3: некоректні числа — пропускаємо
+Рядок 6: очікували 3 колонки, отримали 2
+Завантажено: 2, середній бал: 86.88
+Name,Age,Score
+Olena,19,95.5
+uk-UA: 95,5; "95.5" як uk-UA розпізнано: False
+```
+
+### 11.6. JSON: `System.Text.Json`
+`JsonSerializer.Serialize` перетворює об'єкт (зручно — `record`) у JSON, `Deserialize<T>` — назад. Вбудовано в .NET, додаткові пакети не потрібні.
+
+```csharp
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
+string path = Path.Combine(Path.GetTempPath(), "lec1-demo", "course.json");
+Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+var course = new Course("Алгоритми", 2025, [new Lecture(1, "Нагадування C#"), new Lecture(2, "Складність")]);
+var options = new JsonSerializerOptions
+{
+    WriteIndented = true,                                     // гарне форматування з відступами
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,        // Title → "title"
+    Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)     // кирилиця як є, а не А...
+};
+string json = JsonSerializer.Serialize(course, options);      // об'єкт → рядок JSON
+File.WriteAllText(path, json);
+Console.WriteLine(File.ReadAllText(path));
+Course? loaded = JsonSerializer.Deserialize<Course>(File.ReadAllText(path), options); // JSON → об'єкт; null для "null"
+Console.WriteLine($"Лекцій: {loaded?.Lectures.Count}, друга: {loaded?.Lectures[1].Topic}");
+// record порівнює за значенням, але List<T> — за посиланням, тому порівнюємо вміст
+Console.WriteLine($"Round-trip без втрат: {loaded!.Title == course.Title && loaded.Lectures.SequenceEqual(course.Lectures)}");
+public record Lecture(int Number, string Topic);
+public record Course(string Title, int Year, List<Lecture> Lectures);
+```
+
+**Приклад запуску:**
+```
+{
+  "title": "Алгоритми",
+  "year": 2025,
+  "lectures": [
+    {
+      "number": 1,
+      "topic": "Нагадування C#"
+    },
+    {
+      "number": 2,
+      "topic": "Складність"
+    }
+  ]
+}
+Лекцій: 2, друга: Складність
+Round-trip без втрат: True
+```
+
+### 11.7. Бінарні файли: `ReadAllBytes`, `BinaryWriter`/`BinaryReader`
+Бінарний формат компактний і швидкий, але не читається людиною: читати треба **в тому самому порядку й тих самих типах**, у яких писали.
+
+```csharp
+string dir = Path.Combine(Path.GetTempPath(), "lec1-demo");
+Directory.CreateDirectory(dir);
+string rawPath = Path.Combine(dir, "raw.bin");
+byte[] bytes = [0xCA, 0xFE, 0xBA, 0xBE];
+File.WriteAllBytes(rawPath, bytes);                             // масив байтів як є, без кодування
+Console.WriteLine($"Байти: {Convert.ToHexString(File.ReadAllBytes(rawPath))}");
+string binPath = Path.Combine(dir, "points.bin");
+using (var writer = new BinaryWriter(File.Create(binPath)))    // BinaryWriter закриє і FileStream
+{
+    writer.Write(3);                                            // int — 4 байти: кількість точок
+    for (int i = 0; i < 3; i++)
+    {
+        writer.Write(i * 1.5);                                  // double — 8 байт
+        writer.Write($"P{i}");                                  // string — довжина + UTF-8 байти
+    }
+}
+Console.WriteLine($"Розмір файлу: {new FileInfo(binPath).Length} байт");
+using (var reader = new BinaryReader(File.OpenRead(binPath)))
+{
+    int n = reader.ReadInt32();                                 // читати СТРОГО в тому ж порядку і тих же типах
+    for (int i = 0; i < n; i++)
+            {
+        double x = reader.ReadDouble();                         // спершу double, потім string — як писали
+        string name = reader.ReadString();
+        Console.WriteLine($"{name} = {x}");
+    }
+}
+```
+
+**Приклад запуску:**
+```
+Байти: CAFEBABE
+Розмір файлу: 37 байт
+P0 = 0
+P1 = 1.5
+P2 = 3
+```
+
+### 11.8. Асинхронна робота з файлами
+Методи з суфіксом `Async` не блокують потік під час дискових операцій — важливо для веб-серверів і UI. Під капотом ті самі операції, просто з `await`.
+
+```csharp
+string dir = Path.Combine(Path.GetTempPath(), "lec1-demo");
+Directory.CreateDirectory(dir);
+string path = Path.Combine(dir, "async.txt");
+await File.WriteAllLinesAsync(path, ["перший", "другий", "третій"]); // потік не блокується, поки ОС пише на диск
+string text = await File.ReadAllTextAsync(path);
+Console.WriteLine($"Рядків: {text.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length}");
+// Кілька файлів одночасно
+string[] names = ["x.txt", "y.txt", "z.txt"];
+await Task.WhenAll(names.Select(n => File.WriteAllTextAsync(Path.Combine(dir, n), n.ToUpper())));
+string[] contents = await Task.WhenAll(names.Select(n => File.ReadAllTextAsync(Path.Combine(dir, n))));
+Console.WriteLine(string.Join(" ", contents));
+// Асинхронне читання рядок за рядком великого файлу
+int total = 0;
+await foreach (string line in File.ReadLinesAsync(path))             // IAsyncEnumerable<string> (.NET 7+)
+    total += line.Length;
+Console.WriteLine($"Сума довжин: {total}");
+```
+
+**Приклад запуску:**
+```
+Рядків: 3
+X.TXT Y.TXT Z.TXT
+Сума довжин: 18
+```
+
+### 11.9. Обробка помилок
+Файл можуть видалити, заблокувати чи заборонити до нього доступ **між** перевіркою `File.Exists` і читанням — тому надійний код ловить винятки. `FileNotFoundException` і `DirectoryNotFoundException` успадковуються від `IOException`, отже ловимо їх **раніше**.
+
+```csharp
+string dir = Path.Combine(Path.GetTempPath(), "lec1-demo");
+Directory.CreateDirectory(dir);
+Console.WriteLine(TryRead(Path.Combine(dir, "missing.txt")));
+Console.WriteLine(TryRead(Path.Combine(dir, "no-such-dir", "file.txt")));
+Console.WriteLine(TryRead(dir));                                  // папка замість файлу
+string locked = Path.Combine(dir, "locked.txt");
+using (var stream = new FileStream(locked, FileMode.Create, FileAccess.Write, FileShare.None)) // ексклюзивний доступ
+{
+    Console.WriteLine(TryRead(locked));                           // файл зайнятий іншим потоком
+}
+File.WriteAllText(locked, "тепер доступний");
+Console.WriteLine(TryRead(locked));
+
+static string TryRead(string path)
+{
+    try
+    {
+        return $"OK: {File.ReadAllText(path)}";
+    }
+    catch (FileNotFoundException e)                               // конкретніші типи — першими
+    {
+        return $"Файл не знайдено: {Path.GetFileName(e.FileName)}";
+    }
+    catch (DirectoryNotFoundException)
+    {
+        return "Папку не знайдено";
+    }
+    catch (UnauthorizedAccessException)                           // немає прав або шлях — це папка
+    {
+        return "Доступ заборонено (немає прав або це папка)";
+    }
+    catch (IOException e)                                         // базовий для File/DirectoryNotFound — тому останній
+    {
+        return $"Помилка вводу-виводу: {e.GetType().Name}";
+    }
+}
+```
+
+**Приклад запуску:**
+```
+Файл не знайдено: missing.txt
+Папку не знайдено
+Доступ заборонено (немає прав або це папка)
+Помилка вводу-виводу: IOException
+OK: тепер доступний
+```
+
+### 11.10. Типові помилки
+- **Забутий `Dispose`:** `new StreamWriter(path)` без `using` — дані лишаються в буфері й не потрапляють у файл, а сам файл заблокований для інших процесів. Завжди `using` / `using var`.
+- **Десятковий роздільник залежить від культури:** `double.Parse("95.5")` на комп'ютері з українською локаллю кидає `FormatException` (там роздільник — кома), а `ToString()` пише `95,5` і ламає CSV. Для файлів — завжди `CultureInfo.InvariantCulture`.
+- **Кодування:** запис кирилиці в `Encoding.ASCII` дає `??????`; читання файлу з Windows-1251 як UTF-8 — «кракозябри». Явно вказуйте `Encoding.UTF8` і знайте, у якому кодуванні прийшли дані.
+- **Завантаження величезних файлів у пам'ять:** `ReadAllText`/`ReadAllLines` на файлі в кілька ГБ — `OutOfMemoryException` або повільна робота. Для великих файлів — `File.ReadLines` чи `StreamReader`.
+- **Відносні шляхи:** `"data/input.txt"` працює з `dotnet run`, але «зникає» при запуску з іншої папки — використовуйте `AppContext.BaseDirectory` або шлях з аргументів.
+- **Ручне склеювання шляхів** (`dir + "\\" + name`) — ламається на іншій ОС; використовуйте `Path.Combine`.
+
+---
+
+## 12. Власні колекції: мінімальні реалізації
+Щоб розуміти, що відбувається «під капотом» стандартних колекцій, корисно один раз написати їх самому. Нижче — навмисно мінімальні версії (без видалення, перевірок версії ітератора тощо). **Детально структури даних розбираються в Лекції 2**, а в робочому коді використовуйте готові `List<T>`, `LinkedList<T>`, `Queue<T>` і `System.Threading.Channels` — вони протестовані, оптимізовані та потокобезпечні там, де це заявлено.
+
+### 12.1. `MyList<T>`: динамічний масив
+Масив, який подвоюється при заповненні; `yield return` робить колекцію придатною для `foreach` і LINQ.
+
+```csharp
+using System.Collections;
+var list = new MyList<int>();
+for (int i = 1; i <= 5; i++) list.Add(i * 10);        // ємність росте: 2 → 4 → 8
+list[0] = 7;                                          // індексатор із перевіркою меж
+Console.WriteLine($"Count={list.Count}, Capacity={list.Capacity}");
+Console.WriteLine(string.Join(" ", list));            // foreach/string.Join працюють через IEnumerable<T>
+Console.WriteLine($"Сума через LINQ: {list.Sum()}");
+public sealed class MyList<T> : IEnumerable<T>
+{
+    private T[] _items = new T[2];                    // внутрішній масив фіксованого розміру
+    public int Count { get; private set; }
+    public int Capacity => _items.Length;
+    public void Add(T item)
+    {
+        if (Count == _items.Length)
+            Array.Resize(ref _items, _items.Length * 2); // подвоєння → Add за амортизоване O(1)
+        _items[Count++] = item;
+    }
+    public T this[int index]                          // індексатор: list[i]
+    {
+        get => (uint)index < (uint)Count ? _items[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        set => _items[(uint)index < (uint)Count ? index : throw new ArgumentOutOfRangeException(nameof(index))] = value;
+    }
+    public IEnumerator<T> GetEnumerator()
+    {
+        for (int i = 0; i < Count; i++)
+            yield return _items[i];                   // yield: компілятор сам генерує клас-ітератор
+    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator(); // негенерична версія для сумісності
+}
+```
+
+**Приклад запуску:**
+```
+Count=5, Capacity=8
+7 20 30 40 50
+Сума через LINQ: 147
+```
+
+### 12.2. `MyLinkedList<T>`: однозв'язний список
+Кожен вузол зберігає значення й посилання на наступний; вставка на початок і в кінець (з хвостом) — O(1), доступ за індексом — O(n).
+
+```csharp
+using System.Collections;
+var names = new MyLinkedList<string>();
+names.AddLast("Olena");
+names.AddLast("Andrii");
+names.AddFirst("Iryna");                              // O(1) — лише перепризначення Head
+foreach (string name in names) Console.Write($"{name} -> ");
+Console.WriteLine($"null (Count={names.Count})");
+public sealed class MyLinkedList<T> : IEnumerable<T>
+{
+    private sealed class Node(T value)                // вузол: значення + посилання на наступний
+    {
+        public T Value { get; } = value;
+        public Node? Next { get; set; }
+    }
+    private Node? _head;
+    private Node? _tail;                              // хвіст → AddLast за O(1), а не O(n)
+    public int Count { get; private set; }
+    public void AddFirst(T value)
+    {
+        var node = new Node(value) { Next = _head };
+        _head = node;
+        _tail ??= node;                               // перший елемент — і голова, і хвіст
+        Count++;
+    }
+    public void AddLast(T value)
+    {
+        var node = new Node(value);
+        if (_tail is null) _head = node;
+        else _tail.Next = node;
+        _tail = node;
+        Count++;
+    }
+    public IEnumerator<T> GetEnumerator()
+    {
+        for (Node? current = _head; current is not null; current = current.Next)
+            yield return current.Value;
+    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+```
+
+**Приклад запуску:**
+```
+Iryna -> Olena -> Andrii -> null (Count=3)
+```
+
+### 12.3. `MyQueue<T>`: черга на кільцевому буфері
+FIFO-черга фіксованої ємності: індекси голови й хвоста рухаються по колу, тому `Enqueue`/`Dequeue` — O(1) без зсуву елементів.
+
+```csharp
+var queue = new MyQueue<string>(capacity: 3);
+queue.Enqueue("A"); queue.Enqueue("B"); queue.Enqueue("C");
+Console.WriteLine($"Dequeue: {queue.Dequeue()}");     // FIFO: першим прийшов — першим вийшов
+queue.Enqueue("D");                                   // голова зсунулась — D стає в звільнену клітинку 0
+while (queue.Count > 0) Console.Write($"{queue.Dequeue()} ");
+Console.WriteLine();
+try { queue.Dequeue(); }
+catch (InvalidOperationException e) { Console.WriteLine(e.Message); }
+public sealed class MyQueue<T>(int capacity)
+{
+    private readonly T[] _buffer = new T[capacity];   // кільцевий буфер: індекси "загортаються" по модулю
+    private int _head;                                // звідки забирати
+    private int _tail;                                // куди класти
+    public int Count { get; private set; }
+    public void Enqueue(T item)
+    {
+        if (Count == _buffer.Length) throw new InvalidOperationException("Черга переповнена");
+        _buffer[_tail] = item;
+        _tail = (_tail + 1) % _buffer.Length;         // після останньої клітинки — знову 0
+        Count++;
+    }
+    public T Dequeue()
+    {
+        if (Count == 0) throw new InvalidOperationException("Черга порожня");
+        T item = _buffer[_head];
+        _buffer[_head] = default!;                    // не тримаємо посилання — GC зможе прибрати об'єкт
+        _head = (_head + 1) % _buffer.Length;
+        Count--;
+        return item;
+    }
+}
+```
+
+**Приклад запуску:**
+```
+Dequeue: A
+B C D 
+Черга порожня
+```
+
+### 12.4. `MyChannel<T>`: асинхронна черга виробник/споживач
+Канал — потокобезпечна черга, з якої споживач асинхронно **чекає** на дані. `lock` захищає `Queue<T>`, а `SemaphoreSlim` рахує доступні елементи.
+
+```csharp
+var channel = new MyChannel<int>();
+Task producer = Task.Run(async () =>
+{
+    for (int i = 1; i <= 5; i++)
+    {
+        await channel.WriteAsync(i * i);              // виробник кладе дані
+        await Task.Delay(10);                         // імітація роботи
+    }
+});
+int sum = 0;
+for (int i = 0; i < 5; i++)
+{
+    int value = await channel.ReadAsync();           // споживач чекає, поки з'являться дані, не блокуючи потік
+    Console.WriteLine($"Отримано: {value}");
+    sum += value;
+}
+await producer;
+Console.WriteLine($"Сума: {sum}");
+public sealed class MyChannel<T>
+{
+    private readonly Queue<T> _queue = new();
+    private readonly object _sync = new();            // Queue<T> не потокобезпечна → доступ лише під lock
+    private readonly SemaphoreSlim _available = new(0); // лічильник доступних елементів
+    public Task WriteAsync(T item)
+    {
+        lock (_sync) _queue.Enqueue(item);
+        _available.Release();                         // +1: будимо одного споживача
+        return Task.CompletedTask;
+    }
+    public async Task<T> ReadAsync(CancellationToken token = default)
+    {
+        await _available.WaitAsync(token);            // -1: асинхронно чекаємо, якщо елементів 0
+        lock (_sync) return _queue.Dequeue();         // await усередині lock заборонено — тому окремо
+    }
+}
+```
+
+**Приклад запуску:**
+```
+Отримано: 1
+Отримано: 4
+Отримано: 9
+Отримано: 16
+Отримано: 25
+Сума: 55
+```
+
+### 12.5. Як використовувати `System.Threading.Channels`
+**Канал** — потокобезпечна асинхронна «труба» між виробниками (`ChannelWriter<T>`) і споживачами (`ChannelReader<T>`); готова промислова заміна `MyChannel<T>`.
+
+| Що | API | Поведінка |
+|----|-----|-----------|
+| Створення | `Channel.CreateUnbounded<T>()` | без обмеження — запис завжди миттєвий, пам'ять може рости |
+| | `Channel.CreateBounded<T>(new BoundedChannelOptions(capacity) { FullMode, SingleReader, SingleWriter })` | обмежена ємність; `SingleReader`/`SingleWriter` — підказки для оптимізації |
+| `FullMode` | `Wait` / `DropOldest` / `DropNewest` / `DropWrite` | чекати місця / викинути найстаріший / найновіший у каналі / новий, що записується |
+| Writer | `WriteAsync`, `TryWrite`, `Complete()` | запис (чекає при `Wait`), спроба без очікування, «даних більше не буде» |
+| Reader | `ReadAsync`, `TryRead`, `WaitToReadAsync`, `ReadAllAsync()`, `Completion` | читання; `await foreach` над `ReadAllAsync()` завершується після `Complete()` |
+
+**Приклад 1 — простий виробник і споживач:**
+
+```csharp
+using System.Threading.Channels;
+Channel<string> channel = Channel.CreateUnbounded<string>(); // без обмеження розміру
+Task producer = Task.Run(async () =>
+{
+    foreach (string job in new[] { "парсинг", "обчислення", "звіт" })
+    {
+        await channel.Writer.WriteAsync(job);                // для unbounded завершується одразу
+        await Task.Delay(10);
+    }
+    channel.Writer.Complete();                               // сигнал "більше даних не буде" — ОБОВ'ЯЗКОВО
+});
+await foreach (string job in channel.Reader.ReadAllAsync()) // завершується після Complete() і вичитки всього
+    Console.WriteLine($"Обробляю: {job}");
+await producer;
+await channel.Reader.Completion;                             // Task, що завершується, коли канал закрито й порожній
+Console.WriteLine("Канал закрито");
+```
+
+**Приклад запуску:**
+```
+Обробляю: парсинг
+Обробляю: обчислення
+Обробляю: звіт
+Канал закрито
+```
+
+**Приклад 2 — кілька виробників, один споживач:** `Complete()` викликаємо лише після `Task.WhenAll` усіх виробників.
+
+```csharp
+using System.Threading.Channels;
+var channel = Channel.CreateUnbounded<string>(new UnboundedChannelOptions { SingleReader = true }); // підказка для оптимізації
+Task[] producers = Enumerable.Range(1, 3).Select(id => Task.Run(async () =>
+{
+    for (int i = 1; i <= 2; i++)
+    {
+        await channel.Writer.WriteAsync($"P{id}-{i}");       // кілька потоків пишуть одночасно — це безпечно
+        await Task.Delay(5);
+    }
+})).ToArray();
+Task consumer = Task.Run(async () =>
+{
+    var received = new List<string>();
+    await foreach (string item in channel.Reader.ReadAllAsync())
+        received.Add(item);
+    received.Sort();                                         // порядок між виробниками не гарантовано → сортуємо
+    Console.WriteLine($"Отримано {received.Count}: {string.Join(" ", received)}");
+});
+await Task.WhenAll(producers);                               // чекаємо ВСІХ виробників...
+channel.Writer.Complete();                                   // ...і лише тоді закриваємо канал
+await consumer;
+```
+
+**Приклад запуску:**
+```
+Отримано 6: P1-1 P1-2 P2-1 P2-2 P3-1 P3-2
+```
+
+**Приклад 3 — конвеєр із трьох етапів:** кожен етап читає з одного каналу і пише в наступний.
+
+```csharp
+using System.Threading.Channels;
+// Конвеєр: генерація → піднесення до квадрату → вивід; етапи працюють паралельно
+Channel<int> numbers = Channel.CreateBounded<int>(2);
+Channel<(int N, int Square)> squares = Channel.CreateBounded<(int, int)>(2);
+Task generate = Task.Run(async () =>
+{
+    for (int i = 1; i <= 5; i++) await numbers.Writer.WriteAsync(i);
+    numbers.Writer.Complete();
+});
+Task square = Task.Run(async () =>
+{
+    await foreach (int n in numbers.Reader.ReadAllAsync())   // один читач зберігає порядок
+        await squares.Writer.WriteAsync((n, n * n));
+    squares.Writer.Complete();                               // закриття передається далі по конвеєру
+});
+Task print = Task.Run(async () =>
+{
+    await foreach (var (n, sq) in squares.Reader.ReadAllAsync())
+        Console.WriteLine($"{n}² = {sq}");
+});
+await Task.WhenAll(generate, square, print);
+Console.WriteLine("Конвеєр завершено");
+```
+
+**Приклад запуску:**
+```
+1² = 1
+2² = 4
+3² = 9
+4² = 16
+5² = 25
+Конвеєр завершено
+```
+
+**Приклад 4 — bounded-канал і backpressure:** повний канал пригальмовує виробника або відкидає дані.
+
+```csharp
+using System.Threading.Channels;
+// FullMode = Wait: коли канал повний, WriteAsync чекає, а TryWrite повертає false — це backpressure
+var bounded = Channel.CreateBounded<int>(new BoundedChannelOptions(2)
+{
+    FullMode = BoundedChannelFullMode.Wait,
+    SingleReader = true,
+    SingleWriter = true
+});
+Console.WriteLine($"TryWrite 1: {bounded.Writer.TryWrite(1)}, 2: {bounded.Writer.TryWrite(2)}, 3: {bounded.Writer.TryWrite(3)}");
+ValueTask pending = bounded.Writer.WriteAsync(3);            // виробник "пригальмовано"
+Console.WriteLine($"WriteAsync(3) завершено: {pending.IsCompleted}");
+bounded.Reader.TryRead(out int first);                       // споживач звільнив місце
+await pending;                                               // тепер запис пройшов
+Console.WriteLine($"Прочитано {first}, WriteAsync(3) завершено після читання");
+// DropOldest: запис ніколи не чекає — найстаріший елемент викидається (напр., останні показники датчика)
+var latest = Channel.CreateBounded<int>(new BoundedChannelOptions(3) { FullMode = BoundedChannelFullMode.DropOldest });
+for (int i = 1; i <= 6; i++) latest.Writer.TryWrite(i);
+latest.Writer.Complete();
+Console.WriteLine($"DropOldest залишив: {string.Join(" ", await latest.Reader.ReadAllAsync().ToListAsync())}");
+// DropWrite: викидається НОВИЙ елемент, що не влазить
+var keepFirst = Channel.CreateBounded<int>(new BoundedChannelOptions(3) { FullMode = BoundedChannelFullMode.DropWrite });
+for (int i = 1; i <= 6; i++) keepFirst.Writer.TryWrite(i);
+keepFirst.Writer.Complete();
+var kept = new List<int>();
+while (await keepFirst.Reader.WaitToReadAsync())             // класичний цикл: чекаємо даних, потім вичитуємо все
+    while (keepFirst.Reader.TryRead(out int x)) kept.Add(x);
+Console.WriteLine($"DropWrite залишив: {string.Join(" ", kept)}");
+```
+
+**Приклад запуску:**
+```
+TryWrite 1: True, 2: True, 3: False
+WriteAsync(3) завершено: False
+Прочитано 1, WriteAsync(3) завершено після читання
+DropOldest залишив: 4 5 6
+DropWrite залишив: 1 2 3
+```
+
+**Приклад 5 — скасування і запис у закритий канал:**
+
+```csharp
+using System.Threading.Channels;
+var channel = Channel.CreateUnbounded<int>();
+using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)); // скасування через 100 мс
+try
+{
+    int value = await channel.Reader.ReadAsync(cts.Token);  // даних немає і не буде — без токена чекали б вічно
+    Console.WriteLine(value);
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Читання скасовано за тайм-аутом");
+}
+// Помилка: запис після Complete()
+channel.Writer.Complete();
+Console.WriteLine($"TryWrite після Complete: {channel.Writer.TryWrite(1)}"); // false, без винятку
+try
+{
+    await channel.Writer.WriteAsync(1);
+}
+catch (ChannelClosedException)
+{
+    Console.WriteLine("WriteAsync після Complete: ChannelClosedException");
+}
+Console.WriteLine($"Reader.Completion завершено: {channel.Reader.Completion.IsCompleted}");
+```
+
+**Приклад запуску:**
+```
+Читання скасовано за тайм-аутом
+TryWrite після Complete: False
+WriteAsync після Complete: ChannelClosedException
+Reader.Completion завершено: True
+```
+
+**Типові помилки з каналами:**
+- **Забутий `Complete()`** — `await foreach (… ReadAllAsync())` ніколи не завершиться, програма «зависне».
+- **`Complete()` зарано** (до завершення всіх виробників) — інші виробники отримають `ChannelClosedException`.
+- **Unbounded-канал при повільному споживачі** — черга росте без меж, аж до `OutOfMemoryException`; використовуйте `CreateBounded` з `FullMode = Wait`.
+- **Запис після `Complete()`** — `WriteAsync` кидає `ChannelClosedException`, `TryWrite` мовчки повертає `false` (дані губляться).
+- **Нескінченне очікування** `ReadAsync` без `CancellationToken` — передавайте токен для тайм-аутів і зупинки сервісу.
+
+---
+
+## 13. 15 сучасних можливостей C#
 Можливості C# 7–12, які постійно трапляються в сучасному коді та в прикладах курсу. Кожен приклад — окрема програма з top-level statements.
 
-### 11.1. Span<T> і ReadOnlySpan<T>
+### 13.1. Span<T> і ReadOnlySpan<T>
 `Span<T>` — «вікно» на неперервну ділянку пам'яті (масив, рядок, стек): зрізи робляться **без алокацій і копіювання**. `stackalloc` виділяє буфер на стеку, а `ReadOnlySpan<char>` дозволяє парсити рядки без створення підрядків.
 
 ```csharp
@@ -620,7 +1388,7 @@ static int Sum(ReadOnlySpan<int> values)         // приймає масив, S
 Рік: 2026
 ```
 
-### 11.2. Memory<T>
+### 13.2. Memory<T>
 `Span<T>` живе лише на стеку (не можна зберегти в полі чи використати після `await`). `Memory<T>` — його «довгоживучий» аналог; доступ до даних — через `.Span`.
 
 ```csharp
@@ -642,7 +1410,7 @@ static async Task<int> SumLaterAsync(ReadOnlyMemory<int> values)
 Сума хвоста: 15
 ```
 
-### 11.3. Індекси та діапазони (`^`, `..`)
+### 13.3. Індекси та діапазони (`^`, `..`)
 `^n` — n-й елемент з кінця, `a..b` — діапазон `[a, b)`. Працює з масивами, рядками, `Span<T>`.
 
 ```csharp
@@ -664,7 +1432,7 @@ Console.WriteLine("Hello, world"[7..]);            // працює і з ряд�
 world
 ```
 
-### 11.4. record і `with`
+### 13.4. record і `with`
 `record` — тип з рівністю за значенням, автоматичним `ToString` і деконструкцією. `with` створює змінену копію незмінного об'єкта.
 
 ```csharp
@@ -683,7 +1451,7 @@ Person { Name = Andrii, Age = 31 }
 True
 ```
 
-### 11.5. Pattern matching: property, list, relational
+### 13.5. Pattern matching: property, list, relational
 Патерни перевіряють форму даних: властивості `{ Total: > 1000 }`, списки `[1, .., var last]`, порівняння `>`/`<`, умови `when`.
 
 ```csharp
@@ -708,7 +1476,7 @@ public record Order(string Country, decimal Total);
 Парне число 42
 ```
 
-### 11.6. switch-вирази
+### 13.6. switch-вирази
 `switch` як вираз: коротко, повертає значення, компілятор попереджає про неповне покриття. Можна перемикатися по кортежах.
 
 ```csharp
@@ -737,7 +1505,7 @@ A B C F
 (0, 1)
 ```
 
-### 11.7. Nullable reference types і `?.`, `??`, `??=`
+### 13.7. Nullable reference types і `?.`, `??`, `??=`
 `string?` явно дозволяє `null`, а компілятор попереджає про потенційний `NullReferenceException`. Оператори `?.`, `??`, `??=` роблять роботу з null короткою.
 
 ```csharp
@@ -761,7 +1529,7 @@ Lecture: Anonymous
 1
 ```
 
-### 11.8. Кортежі та деконструкція
+### 13.8. Кортежі та деконструкція
 `(int Min, int Max)` — легкий значущий тип для повернення кількох значень; деконструкція розкладає його у змінні.
 
 ```csharp
@@ -784,7 +1552,7 @@ a=2, b=1
 x=1, z=3
 ```
 
-### 11.9. `init` і `required` властивості
+### 13.9. `init` і `required` властивості
 `init` дозволяє присвоїти властивість лише під час створення об'єкта; `required` змушує задати її в ініціалізаторі (C# 11).
 
 ```csharp
@@ -805,7 +1573,7 @@ public class ServerConfig
 localhost:8080, TLS=False
 ```
 
-### 11.10. Primary constructors (C# 12)
+### 13.10. Primary constructors (C# 12)
 Параметри конструктора пишуться прямо після імені класу й доступні в усьому тілі — менше шаблонного коду для DI.
 
 ```csharp
@@ -828,7 +1596,7 @@ public class OrderService(ConsoleLogger logger, int maxRetries)
 [APP] Обробка order-1, спроб: 3
 ```
 
-### 11.11. Collection expressions і spread `..` (C# 12)
+### 13.11. Collection expressions і spread `..` (C# 12)
 Єдиний синтаксис `[1, 2, 3]` для масивів, `List<T>`, `HashSet<T>`, `Span<T>`; `..` вставляє елементи іншої колекції.
 
 ```csharp
@@ -849,7 +1617,7 @@ Console.WriteLine(empty.Length);
 0
 ```
 
-### 11.12. Raw string literals `"""`
+### 13.12. Raw string literals `"""`
 Багаторядкові рядки без екранування лапок і `\`; відступ визначається закривальними `"""`. `$$` змінює синтаксис інтерполяції на `{{ }}` — зручно для JSON.
 
 ```csharp
@@ -874,7 +1642,7 @@ Console.WriteLine(sql);
 SELECT * FROM "Users" WHERE Id = 1
 ```
 
-### 11.13. async/await
+### 13.13. async/await
 `async`/`await` дозволяють чекати на I/O без блокування потоку; `Task.WhenAll` запускає кілька операцій одночасно.
 
 ```csharp
@@ -897,7 +1665,7 @@ a.txt (300 мс), b.txt (200 мс)
 Паралельно: True
 ```
 
-### 11.14. Generic math: `INumber<T>` (C# 11)
+### 13.14. Generic math: `INumber<T>` (C# 11)
 Статичні абстрактні члени інтерфейсів дозволяють писати один узагальнений алгоритм для `int`, `double`, `decimal` тощо.
 
 ```csharp
@@ -920,7 +1688,7 @@ static T SumAll<T>(T[] values) where T : INumber<T> // один метод дл�
 0.3
 ```
 
-### 11.15. Ключове слово `field` (C# 14)
+### 13.15. Ключове слово `field` (C# 14)
 Напівавтоматичні властивості: у `get`/`set` можна звертатися до згенерованого компілятором поля через `field`, не оголошуючи `_name` вручну. Потрібен C# 14 (.NET 10+); на старших SDK — `<LangVersion>14</LangVersion>` або новіше в `.csproj`.
 
 ```csharp
@@ -945,7 +1713,7 @@ public class User
 
 ---
 
-## 12. Підсумки
+## 14. Підсумки
 - C# має **фіксовані розміри** типів, `const` (компіляція) і `readonly` (виконання), статичний `var`.
 - `switch`-вирази та патерни (`is int k and > 0`) замінюють громіздкі ланцюжки `if`.
 - Масиви: `int[]`, прямокутні `int[,]`, зубчасті `int[][]`; `foreach` — зручний обхід.
@@ -954,12 +1722,14 @@ public class User
 - Винятки — `try/catch/finally`; LINQ — декларативна обробка колекцій.
 - Бінарний пошук O(log n) на відсортованих даних радикально швидший за лінійний O(n); стежте за `lo + (hi - lo) / 2` і межами циклу, для частих пошуків — `HashSet<T>`.
 - Стиль: `PascalCase` для типів і методів, `camelCase` для локальних, `_camelCase` для полів; правила — у `.editorconfig`, перевірка — `dotnet format`.
+- Файли: шляхи — через `Path.Combine`; малі файли — `File.ReadAllText`/`WriteAllLines`, великі — ліниво `File.ReadLines` або `StreamReader` з `using`; числа в CSV — з `CultureInfo.InvariantCulture`; JSON — `System.Text.Json`; помилки I/O — `try/catch` від конкретних винятків до `IOException`.
+- Власні `MyList<T>`, `MyLinkedList<T>`, `MyQueue<T>`, `MyChannel<T>` показують механіку колекцій; у робочому коді — `List<T>`, `LinkedList<T>`, `Queue<T>` і `System.Threading.Channels` (не забувайте `Writer.Complete()` і bounded-канали для backpressure).
 - `Span<T>`/`Memory<T>` дають зрізи без алокацій; `record`, `with`, `init`/`required`, primary constructors, collection expressions і `field` (C# 14) скорочують шаблонний код.
 - Патерни, switch-вирази, nullable-анотації, `async/await` і generic math (`INumber<T>`) — основа виразного та безпечного сучасного C#.
 
 ---
 
-## 13. Питання для самоперевірки
+## 15. Питання для самоперевірки
 1. Чим `const` відрізняється від `readonly` і коли можна використати лише друге?
 2. Що виведе програма, якщо передати `int` у метод без `ref` і змінити його всередині? А з `ref`?
 3. Чим `int[,]` відрізняється від `int[][]` за будовою та `Length`?
@@ -972,3 +1742,9 @@ public class User
 10. Як за допомогою `INumber<T>` написати один метод суми для `int`, `double` і `decimal`?
 11. Що повертає `Array.BinarySearch`, якщо елемента немає, і як отримати з результату позицію для вставки?
 12. Коли лінійний пошук O(n) доречніший, ніж сортування + бінарний пошук?
+13. Чим `File.ReadLines` відрізняється від `File.ReadAllLines` і що обрати для лог-файлу розміром 5 ГБ?
+14. Чому `double.Parse("95.5")` може впасти на комп'ютері з українською локаллю і як це виправити?
+15. Що станеться, якщо не викликати `Dispose` для `StreamWriter`, і в якому порядку ставити `catch` для `FileNotFoundException` та `IOException`?
+16. Чому `MyList<T>` подвоює масив, а не збільшує його на 1, і яка амортизована складність `Add`?
+17. Що станеться зі споживачем `await foreach (var x in reader.ReadAllAsync())`, якщо виробник не викличе `Complete()`?
+18. Чим відрізняються `BoundedChannelFullMode.Wait`, `DropOldest` і `DropWrite`?
