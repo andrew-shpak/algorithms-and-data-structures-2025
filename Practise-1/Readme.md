@@ -4,7 +4,7 @@
 
 > Локально: створіть проєкт командою `dotnet new console`, вставте код у `Program.cs` і запустіть `dotnet run`.
 
-**Усього: 5 балів за три задачі.** Заборонено використовувати `Array.Sort`, `Array.Reverse`, LINQ та готові колекції (`List`, `Queue`, `Stack`, `HashSet`, `Dictionary`) — усі алгоритми пишемо вручну на масивах.
+**Усього: 5 балів за три задачі.** Заборонено використовувати `Array.Sort`, `Array.Reverse`, LINQ, клас `Math` та готові колекції (`List`, `Queue`, `Stack`, `HashSet`, `Dictionary`) — усі алгоритми пишемо вручну на масивах.
 
 ---
 
