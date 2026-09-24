@@ -1,5 +1,7 @@
 # Лекція 8 — Union-Find (Disjoint Set Union)
 
+- Tasks: [tasks.md](tasks.md) — прості завдання з реалізаціями та прикладами.
+
 ---
 
 ## Зміст
