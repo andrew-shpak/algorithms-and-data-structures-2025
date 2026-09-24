@@ -4,6 +4,8 @@
 
 Кожне завдання — окрема невелика програма або метод. Дані можна задати в коді. Перевірте звичайний приклад і граничні випадки з таблиць. Готові алгоритми з наступних лекцій тут не потрібні.
 
+**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
 ## Завдання 1. Хвилини на годиннику
@@ -205,6 +207,261 @@ public sealed class LimitedCounter
 True, True, False; Value=2
 True, True; Value=1
 False; Value=0
+```
+
+</details>
+
+## Завдання 5. Безпечна швидкість
+
+Метод `LimitSpeed` обмежує швидкість діапазоном `0..90`: від’ємне значення замінює на `0`, більше за `90` — на `90`. Використайте `if`, без `Math.Clamp`. Перевірте обидві межі.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (int speed in new[] { -5, 0, 45, 90, 120 })
+    Console.WriteLine(LimitSpeed(speed));
+
+static int LimitSpeed(int speed)
+{
+    if (speed < 0) return 0;
+    if (speed > 90) return 90;
+    return speed;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+0
+0
+45
+90
+90
+```
+
+</details>
+
+## Завдання 6. Знак вимірювання
+
+Для цілого числа поверніть `нижче нуля`, `нуль` або `вище нуля`. Використайте реляційні патерни у switch-виразі. Число не змінюйте.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (int value in new[] { -12, 0, 7 })
+    Console.WriteLine(SignLabel(value));
+
+static string SignLabel(int value) => value switch
+{
+    < 0 => "нижче нуля",
+    0 => "нуль",
+    > 0 => "вище нуля"
+};
+```
+
+**Очікуваний вивід:**
+
+```text
+нижче нуля
+нуль
+вище нуля
+```
+
+</details>
+
+## Завдання 7. Кожен другий сигнал
+
+Виведіть числа від невід’ємного `start` до нуля з кроком `-2`. Якщо `start` непарне, останнім буде `1`. Використайте цикл; результат оформіть у квадратних дужках.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (int start in new[] { 6, 5, 0 })
+{
+    var signals = new List<int>();
+    for (int value = start; value >= 0; value -= 2)
+        signals.Add(value);
+    Console.WriteLine($"[{string.Join(", ", signals)}]");
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[6, 4, 2, 0]
+[5, 3, 1]
+[0]
+```
+
+</details>
+
+## Завдання 8. Елементи на парних індексах
+
+Поверніть елементи масиву за індексами `0, 2, 4, ...`. Парність самих значень не має значення. Початковий масив не змінюйте; порожній дає порожній результат.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (int[] values in new[] { new[] { 9, 2, 7, 4, 5 }, new[] { 8 }, Array.Empty<int>() })
+{
+    var result = new List<int>();
+    for (int i = 0; i < values.Length; i += 2)
+        result.Add(values[i]);
+    Console.WriteLine($"[{string.Join(", ", result)}]");
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[9, 7, 5]
+[8]
+[]
+```
+
+</details>
+
+## Завдання 9. Назва без пробілів
+
+Замініть кожен звичайний пробіл на `_`, зберігши решту символів. Використайте цикл по символах, без `Replace`. Два пробіли мають дати два підкреслення.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (string name in new[] { "red fox", "a  b", "", "cat" })
+    Console.WriteLine($"[{MakeLabel(name)}]");
+
+static string MakeLabel(string name)
+{
+    char[] result = name.ToCharArray();
+    for (int i = 0; i < result.Length; i++)
+        if (result[i] == ' ') result[i] = '_';
+    return new string(result);
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[red_fox]
+[a__b]
+[]
+[cat]
+```
+
+</details>
+
+## Завдання 10. Остання позначка
+
+Знайдіть індекс останнього входження заданого числа в масиві. Почніть пошук з кінця; якщо збігу немає, поверніть `-1`. Готові методи пошуку не використовуйте.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine(LastPosition(new[] { 4, 7, 4, 2 }, 4));
+Console.WriteLine(LastPosition(new[] { 4, 7 }, 9));
+Console.WriteLine(LastPosition(Array.Empty<int>(), 4));
+
+static int LastPosition(int[] values, int target)
+{
+    for (int i = values.Length - 1; i >= 0; i--)
+        if (values[i] == target) return i;
+    return -1;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+2
+-1
+-1
+```
+
+</details>
+
+## Завдання 11. Число або повідомлення
+
+Спробуйте прочитати ціле число через `int.TryParse`. За успіху виведіть саме число; за помилки — `ERROR`. Некоректний текст не має спричиняти виняток.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (string text in new[] { "42", "-7", "cat", "", "99999999999999999999" })
+{
+    if (int.TryParse(text, out int value))
+        Console.WriteLine(value);
+    else
+        Console.WriteLine("ERROR");
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+42
+-7
+ERROR
+ERROR
+ERROR
+```
+
+</details>
+
+## Завдання 12. Прямокутна рамка
+
+Створіть `record Frame` з цілими шириною та висотою у діапазоні `0..1000`. Обчислювана властивість `Perimeter` повертає `2 * (Width + Height)`. Перевірте звичайну рамку, квадрат і нульові розміри.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (var frame in new[] { new Frame(3, 5), new Frame(4, 4), new Frame(0, 0) })
+    Console.WriteLine(frame.Perimeter);
+
+public record Frame(int Width, int Height)
+{
+    public int Perimeter => 2 * (Width + Height);
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+16
+16
+0
 ```
 
 </details>

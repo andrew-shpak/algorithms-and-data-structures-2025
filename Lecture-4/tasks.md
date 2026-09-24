@@ -4,6 +4,8 @@
 
 Виконуйте кожне завдання як окремий метод C#. Для рекурсії спочатку запишіть базовий випадок словами. Вхідні дані невеликі; файли й інтерактивне меню не потрібні.
 
+**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
 ## Завдання 1. Рекурсивне відлуння
@@ -185,6 +187,287 @@ static int[] Transform(int[] values, Func<int, int> operation)
 -2, 3, 0
 Length=0
 Початковий: 2, -3, 0
+```
+
+</details>
+
+## Завдання 5. Сходинки зі зірочок
+
+Рекурсивно виведіть рядки з `1, 2, ..., n` зірочками, де `0 ≤ n ≤ 10`. Спочатку виконайте рекурсивний виклик для `n - 1`, потім надрукуйте поточний рядок. Для нуля нічого не друкуйте.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+PrintSteps(3);
+PrintSteps(0);
+Console.WriteLine("END");
+
+static void PrintSteps(int n)
+{
+    if (n == 0) return;
+    PrintSteps(n - 1);
+    Console.WriteLine(new string('*', n));
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+*
+**
+***
+END
+```
+
+</details>
+
+## Завдання 6. Рекурсивний пошук символу
+
+Перевірте, чи є заданий символ у рядку, починаючи з індексу `0`. На кожному кроці переходьте на один символ далі. Не використовуйте цикли або `Contains`; довжина рядка не перевищує `100`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine(ContainsChar("planet", 'n', 0));
+Console.WriteLine(ContainsChar("planet", 'x', 0));
+Console.WriteLine(ContainsChar("", 'a', 0));
+
+static bool ContainsChar(string text, char target, int index)
+{
+    if (index == text.Length) return false;
+    if (text[index] == target) return true;
+    return ContainsChar(text, target, index + 1);
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+True
+False
+False
+```
+
+</details>
+
+## Завдання 7. Ділення через віднімання
+
+Рекурсивно обчисліть цілу частку `a / b`, де `0 ≤ a ≤ 100`, `b > 0`. Якщо `a < b`, поверніть `0`; інакше відніміть `b` і додайте один до результату наступного виклику. Оператори `/` та `%` не використовуйте.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine(Quotient(17, 5));
+Console.WriteLine(Quotient(4, 7));
+Console.WriteLine(Quotient(0, 3));
+Console.WriteLine(Quotient(9, 3));
+
+static int Quotient(int a, int b)
+{
+    if (a < b) return 0;
+    return 1 + Quotient(a - b, b);
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+3
+0
+0
+3
+```
+
+</details>
+
+## Завдання 8. Двійкові слова без сусідніх одиниць
+
+Згенеруйте всі рядки довжини `n`, складені з `0` та `1`, без підрядка `11`. `0 ≤ n ≤ 8`. Рекурсивно пробуйте `0` перед `1`; для `n = 0` існує один порожній рядок. Показуйте кожен рядок у квадратних дужках.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (string word in Generate(3, "")) Console.WriteLine($"[{word}]");
+foreach (string word in Generate(0, "")) Console.WriteLine($"[{word}]");
+
+static List<string> Generate(int remaining, string prefix)
+{
+    if (remaining == 0) return new List<string> { prefix };
+    var result = Generate(remaining - 1, prefix + "0");
+    if (prefix.Length == 0 || prefix[^1] != '1')
+        result.AddRange(Generate(remaining - 1, prefix + "1"));
+    return result;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[000]
+[001]
+[010]
+[100]
+[101]
+[]
+```
+
+</details>
+
+## Завдання 9. Коробка будь-якого типу
+
+Створіть клас `Box<T>` із властивістю `Value`. Метод `Exchange` записує нове значення й повертає попереднє. Перевірте одну коробку з числом і другу з рядком; приведення до `object` не потрібне.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var number = new Box<int>(5);
+Console.WriteLine($"old={number.Exchange(9)}, new={number.Value}");
+var word = new Box<string>("day");
+Console.WriteLine($"old={word.Exchange("night")}, new={word.Value}");
+
+public sealed class Box<T>(T value)
+{
+    public T Value { get; private set; } = value;
+    public T Exchange(T next)
+    {
+        T previous = Value;
+        Value = next;
+        return previous;
+    }
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+old=5, new=9
+old=day, new=night
+```
+
+</details>
+
+## Завдання 10. Останній елемент або запасне значення
+
+Напишіть `LastOr<T>` для масиву довільного типу. Якщо масив непорожній, поверніть останній елемент; інакше — передане запасне значення. Використайте один узагальнений метод для чисел і рядків.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine(LastOr(new[] { 2, 5, 8 }, -1));
+Console.WriteLine(LastOr(Array.Empty<int>(), -1));
+Console.WriteLine(LastOr(new[] { "east", "west" }, "none"));
+Console.WriteLine(LastOr(Array.Empty<string>(), "none"));
+
+static T LastOr<T>(T[] values, T fallback)
+{
+    return values.Length == 0 ? fallback : values[^1];
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+8
+-1
+west
+none
+```
+
+</details>
+
+## Завдання 11. Замикання з накопиченим добутком
+
+Фабрика повертає `Func<int, int>` із власним накопиченим добутком, початково `1`. Кожен виклик множить його на аргумент і повертає нове значення. Дві функції від різних викликів фабрики повинні мати незалежний стан. Використовуйте невеликі числа.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var first = MakeMultiplier();
+var second = MakeMultiplier();
+Console.WriteLine(first(2));
+Console.WriteLine(first(3));
+Console.WriteLine(second(5));
+Console.WriteLine(first(0));
+
+static Func<int, int> MakeMultiplier()
+{
+    int product = 1;
+    return value =>
+    {
+        product *= value;
+        return product;
+    };
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+2
+6
+5
+0
+```
+
+</details>
+
+## Завдання 12. Порядок двох перетворень
+
+Напишіть `Compose(first, second)`, що повертає функцію `x => second(first(x))`. Порівняйте «додати 2, потім помножити на 3» і зворотний порядок. Також перевірте композицію з тотожним перетворенням.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var addThenMultiply = Compose(x => x + 2, x => x * 3);
+var multiplyThenAdd = Compose(x => x * 3, x => x + 2);
+Console.WriteLine(addThenMultiply(4));
+Console.WriteLine(multiplyThenAdd(4));
+Console.WriteLine(Compose(x => x, x => -x)(4));
+
+static Func<int, int> Compose(Func<int, int> first, Func<int, int> second)
+{
+    return x => second(first(x));
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+18
+14
+-4
 ```
 
 </details>
