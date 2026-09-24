@@ -4,6 +4,8 @@
 
 Кожне завдання незалежне; мова — C#. Дані задавайте в коді, без файлів і меню. Тут обираємо колекцію під конкретну операцію. `[]` означає порожню колекцію.
 
+**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
 ## Завдання 1. Переплести дві смужки — `List<string>`
@@ -221,6 +223,263 @@ static int FirstInvalid(string commands)
 0
 1
 -1
+```
+
+</details>
+
+## Завдання 5. Зворотний словник кольорів
+
+Перетворіть словник `назва → код` на `код → назва`. У цій задачі і назви, і коди унікальні. Початковий словник не змінюйте; невідомий код позначте `NONE`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var colors = new Dictionary<string, int> { ["red"] = 10, ["blue"] = 20 };
+var names = new Dictionary<int, string>();
+foreach (var pair in colors) names.Add(pair.Value, pair.Key);
+foreach (int code in new[] { 20, 10, 30 })
+    Console.WriteLine(names.TryGetValue(code, out string? name) ? name : "NONE");
+Console.WriteLine($"Original={colors.Count}");
+```
+
+**Очікуваний вивід:**
+
+```text
+blue
+red
+NONE
+Original=2
+```
+
+</details>
+
+## Завдання 6. Налаштування з перевизначеннями
+
+Створіть новий словник налаштувань: спочатку базові значення, потім користувацькі. Якщо ключ повторюється, користувацьке значення перемагає. Обидва вхідні словники залишаються без змін.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var defaults = new Dictionary<string, string> { ["theme"] = "light", ["size"] = "medium" };
+var custom = new Dictionary<string, string> { ["theme"] = "dark", ["sound"] = "off" };
+var result = new Dictionary<string, string>(defaults);
+foreach (var pair in custom) result[pair.Key] = pair.Value;
+foreach (string key in new[] { "theme", "size", "sound" })
+    Console.WriteLine($"{key}={result[key]}");
+Console.WriteLine($"Default theme={defaults["theme"]}");
+```
+
+**Очікуваний вивід:**
+
+```text
+theme=dark
+size=medium
+sound=off
+Default theme=light
+```
+
+</details>
+
+## Завдання 7. Перший повторний номер
+
+Знайдіть перше число, яке повторно зустрічається під час читання масиву зліва направо. Використайте результат `HashSet.Add`: `false` означає, що значення вже було. Якщо повторів немає, поверніть `null`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (int[] values in new[] { new[] { 4, 2, 7, 2, 4 }, new[] { 1, 2 }, Array.Empty<int>() })
+    Console.WriteLine(FirstRepeat(values)?.ToString() ?? "NONE");
+
+static int? FirstRepeat(int[] values)
+{
+    var seen = new HashSet<int>();
+    foreach (int value in values)
+        if (!seen.Add(value)) return value;
+    return null;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+2
+NONE
+NONE
+```
+
+</details>
+
+## Завдання 8. Попередній доступний розмір — SortedSet
+
+У впорядкованій множині знайдіть найбільший розмір, строго менший за запитаний. Для малої множини достатньо прямого перебору до першого завеликого значення. Якщо підхожого немає, поверніть `null`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var sizes = new SortedSet<int> { 36, 38, 40, 42 };
+foreach (int wanted in new[] { 41, 38, 36 })
+    Console.WriteLine(PreviousSize(sizes, wanted)?.ToString() ?? "NONE");
+
+static int? PreviousSize(SortedSet<int> sizes, int wanted)
+{
+    int? result = null;
+    foreach (int size in sizes)
+    {
+        if (size >= wanted) break;
+        result = size;
+    }
+    return result;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+40
+36
+NONE
+```
+
+</details>
+
+## Завдання 9. Пари ключів і підписів
+
+Два масиви однакової довжини містять унікальні номери шафок і відповідні підписи. Побудуйте словник за індексами. Продемонструйте також порожні масиви.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var labels = BuildLabels(new[] { 12, 7, 25 }, new[] { "A", "B", "C" });
+Console.WriteLine(labels[7]);
+Console.WriteLine(labels[25]);
+Console.WriteLine(BuildLabels(Array.Empty<int>(), Array.Empty<string>()).Count);
+
+static Dictionary<int, string> BuildLabels(int[] keys, string[] values)
+{
+    var result = new Dictionary<int, string>();
+    for (int i = 0; i < keys.Length; i++) result.Add(keys[i], values[i]);
+    return result;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+B
+C
+0
+```
+
+</details>
+
+## Завдання 10. Пріоритет і порядок надходження
+
+Обробіть повідомлення за зростанням числового пріоритету. Для рівних пріоритетів збережіть порядок додавання. Передайте в `PriorityQueue` пару `(priority, sequence)` як ключ пріоритету.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var queue = new PriorityQueue<string, (int Priority, int Sequence)>();
+(string Text, int Priority)[] messages = { ("A", 2), ("B", 1), ("C", 1), ("D", 3) };
+for (int i = 0; i < messages.Length; i++)
+    queue.Enqueue(messages[i].Text, (messages[i].Priority, i));
+while (queue.TryDequeue(out string? text, out _)) Console.WriteLine(text);
+Console.WriteLine($"Count={queue.Count}");
+```
+
+**Очікуваний вивід:**
+
+```text
+B
+C
+A
+D
+Count=0
+```
+
+</details>
+
+## Завдання 11. Знімок списку для читання
+
+Порівняйте обгортку `AsReadOnly()` над початковим списком і таку саму обгортку над його копією. Змініть початковий список. З’ясуйте, яка з двох колекцій показує нове значення, а яка зберігає старе.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var original = new List<int> { 10, 20 };
+var liveView = original.AsReadOnly();
+var snapshot = new List<int>(original).AsReadOnly();
+original[0] = 99;
+original.Add(30);
+Console.WriteLine($"View: {string.Join(", ", liveView)}");
+Console.WriteLine($"Snapshot: {string.Join(", ", snapshot)}");
+```
+
+**Очікуваний вивід:**
+
+```text
+View: 99, 20, 30
+Snapshot: 10, 20
+```
+
+</details>
+
+## Завдання 12. Перемикачі ламп — HashSet
+
+Кожен номер у послідовності натискань змінює стан відповідної лампи. Увімкнену вимикаємо, вимкнену вмикаємо. Спочатку всі вимкнені. Поверніть номери увімкнених ламп за зростанням.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (int[] presses in new[] { new[] { 1, 2, 1, 3, 2, 2 }, new[] { 5, 5 }, Array.Empty<int>() })
+{
+    var on = new HashSet<int>();
+    foreach (int lamp in presses)
+        if (!on.Add(lamp)) on.Remove(lamp);
+    var result = new List<int>(on);
+    result.Sort();
+    Console.WriteLine($"[{string.Join(", ", result)}]");
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[2, 3]
+[]
+[]
 ```
 
 </details>
