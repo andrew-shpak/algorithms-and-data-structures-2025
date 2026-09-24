@@ -11,9 +11,18 @@
 | `List<T>` | Індекс, вставка, заміна, видалення | 1–2, 9–12 |
 | `LinkedList<T>` | Вузол, сусіди, обидва кінці | 3–4, 13–16 |
 | `Stack<T>` | LIFO: останній доданий виходить першим | 5–6, 17–20 |
-| `Queue<T>` | FIFO: перший доданий виходить першим | 7–8, 21–24 |
+| `Queue<T>` | FIFO: перший доданий виходить першим | 7–8, 21–25 |
+| `ConcurrentQueue<T>` | Спільна FIFO-черга для кількох завдань | 26–27 |
+| `ConcurrentStack<T>` | LIFO та пакетне вилучення | 28 |
+| `ConcurrentBag<T>` | Повтори, невизначений порядок, спільні результати | 29–30 |
 
-**Усього: 24 завдання із повними реалізаціями та очікуваним виводом.**
+**Усього: 30 завдань із повними реалізаціями та очікуваним виводом.**
+
+**Звичайні й конкурентні версії.** `Queue<T>` та `Stack<T>` підходять для послідовної роботи. Для спільного додавання й вилучення з кількох потоків є `ConcurrentQueue<T>` і `ConcurrentStack<T>` у просторі імен `System.Collections.Concurrent`. [Потокобезпечні колекції .NET](https://learn.microsoft.com/en-us/dotnet/standard/collections/thread-safe/).
+
+`ConcurrentBag<T>` зберігає повтори, але не надає індексів і не гарантує порядок. Це окрема неупорядкована колекція; вона не замінює список, якщо потрібні позиції елементів. [Опис ConcurrentBag](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentbag-1?view=net-10.0).
+
+У нових прикладах `Task.Run` запускає роботу, а `await Task.WhenAll` очікує її завершення. Для вилучення одразу викликайте `TryDequeue`, `TryPop` чи `TryTake`: перевірка `Count` або `IsEmpty` перед окремою дією не резервує елемент. Якщо виробник ще додає дані, порожня колекція не означає кінець роботи — приклад із явним завершенням є в [Лекції 3](../Lecture-3/tasks.md#завдання-18-виробник-ще-працює--blockingcollection-над-concurrentqueue).
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -946,6 +955,266 @@ static Queue<int> MergeEvents(Queue<int> first, Queue<int> second)
 1, 2, 4, 4, 7, 8
 Залишок: 0
 0
+```
+
+</details>
+
+## Завдання 25. Буфер на два елементи — Queue
+
+Звичайна черга приймає не більше двох значень. Напишіть `TryEnqueue`, що повертає `false`, коли буфер повний. Обробіть один елемент і повторіть вставку. Усе виконується в одному потоці.
+
+`new Queue<int>(2)` задає початкову місткість, а не жорсткий ліміт; обмеження перевіряє наш метод. Перевірка `Count` і вставка тут придатні лише для послідовного виконання. [Конструктор Queue у .NET 10](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.queue-1.-ctor?view=net-10.0).
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var buffer = new Queue<int>(2);
+Console.WriteLine(TryEnqueue(buffer, 10, 2));
+Console.WriteLine(TryEnqueue(buffer, 20, 2));
+Console.WriteLine(TryEnqueue(buffer, 30, 2));
+Console.WriteLine($"Оброблено: {buffer.Dequeue()}");
+Console.WriteLine(TryEnqueue(buffer, 30, 2));
+Console.WriteLine($"Залишок: {string.Join(", ", buffer)}");
+
+static bool TryEnqueue(Queue<int> queue, int value, int limit)
+{
+    if (queue.Count >= limit) return false;
+    queue.Enqueue(value);
+    return true;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+True
+True
+False
+Оброблено: 10
+True
+Залишок: 20, 30
+```
+
+</details>
+
+## Завдання 26. Два джерела подій — ConcurrentQueue
+
+Два виробники додають події `A1, A2` та `B1, B2` у спільну чергу. Дочекайтеся обох через `Task.WhenAll`, потім заберіть усі події. Перевірте, що порядок кожного виробника збережений: `A1` раніше за `A2`, а `B1` раніше за `B2`.
+
+Загальне чергування `A` і `B` залежить від планувальника. Порядок перевіряйте **до** сортування; сортування потрібне тільки для стабільного друку складу результату.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var events = new ConcurrentQueue<string>();
+await Task.WhenAll(
+    Task.Run(() => Produce("A")),
+    Task.Run(() => Produce("B")));
+
+var received = new List<string>();
+while (events.TryDequeue(out string? item)) received.Add(item);
+bool localOrder = received.IndexOf("A1") < received.IndexOf("A2")
+    && received.IndexOf("B1") < received.IndexOf("B2");
+received.Sort(StringComparer.Ordinal);
+Console.WriteLine($"Отримано: {string.Join(", ", received)}");
+Console.WriteLine($"FIFO кожного виробника: {localOrder}");
+Console.WriteLine($"Порожня: {events.IsEmpty}");
+
+void Produce(string source)
+{
+    events.Enqueue(source + "1");
+    events.Enqueue(source + "2");
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+Отримано: A1, A2, B1, B2
+FIFO кожного виробника: True
+Порожня: True
+```
+
+</details>
+
+## Завдання 27. Двоє працівників розбирають готову чергу
+
+Черга `ConcurrentQueue<int>` уже містить номери `1..6`; нові номери більше не надходять. Два завдання забирають їх через `TryDequeue`. Кожне складає результат у **власний** `List<int>`, а головна програма об’єднує списки лише після `Task.WhenAll`.
+
+Розподіл роботи між працівниками не визначений: один може забрати навіть усі елементи. Перевіряємо загальний набір і порожню чергу, а не однакове навантаження. Тут `false` від `TryDequeue` завершує цикл, бо виробники вже не працюють.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var queue = new ConcurrentQueue<int>(new[] { 1, 2, 3, 4, 5, 6 });
+List<int>[] batches = await Task.WhenAll(Task.Run(Consume), Task.Run(Consume));
+var processed = new List<int>();
+foreach (var batch in batches) processed.AddRange(batch);
+processed.Sort();
+Console.WriteLine($"Оброблено: {string.Join(", ", processed)}");
+Console.WriteLine($"Кількість: {processed.Count}");
+Console.WriteLine($"Порожня: {queue.IsEmpty}");
+
+List<int> Consume()
+{
+    var local = new List<int>();
+    while (queue.TryDequeue(out int item)) local.Add(item);
+    return local;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+Оброблено: 1, 2, 3, 4, 5, 6
+Кількість: 6
+Порожня: True
+```
+
+</details>
+
+## Завдання 28. Пачка карток — ConcurrentStack
+
+Ознайомтеся з пакетними операціями `ConcurrentStack<T>`. Додайте `A, B, C` через `PushRange`, а потім заберіть не більше двох карток через `TryPopRange`. Використовуйте фактичну кількість повернених елементів, а не довжину буфера.
+
+Цей перший приклад API виконується послідовно, тому порядок LIFO можна показати точно. Приклад зі спільним стеком і кількома завданнями є в [Лекції 3](../Lecture-3/tasks.md).
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var cards = new ConcurrentStack<string>();
+cards.PushRange(new[] { "A", "B", "C" });
+string[] buffer = new string[2];
+int count = cards.TryPopRange(buffer);
+Console.WriteLine($"Пачка: {string.Join(", ", buffer, 0, count)}");
+Console.WriteLine($"Верхівка: {(cards.TryPeek(out string? top) ? top : "NONE")}");
+Console.WriteLine($"Знято: {(cards.TryPop(out string? last) ? last : "NONE")}");
+Console.WriteLine($"Порожня пачка: {cards.TryPopRange(buffer)}");
+```
+
+**Очікуваний вивід:**
+
+```text
+Пачка: C, B
+Верхівка: A
+Знято: A
+Порожня пачка: 0
+```
+
+</details>
+
+## Завдання 29. Жетони з повторами — ConcurrentBag
+
+Додайте в `ConcurrentBag<int>` жетони `5, 5, 9`. Переконайтеся, що `TryPeek` не видаляє елемент, потім заберіть усі жетони через `TryTake`. Повторні значення мають зберегтися.
+
+Bag не гарантує FIFO або LIFO. Сортуйте лише отриманий результат для друку; не очікуйте конкретного значення від `TryPeek`. [Контракт ConcurrentBag у .NET 10](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentbag-1?view=net-10.0).
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var tokens = new ConcurrentBag<int>();
+tokens.Add(5);
+tokens.Add(5);
+tokens.Add(9);
+Console.WriteLine($"Є жетон: {tokens.TryPeek(out _)}");
+Console.WriteLine($"До вилучення: {tokens.Count}");
+var taken = new List<int>();
+while (tokens.TryTake(out int token)) taken.Add(token);
+taken.Sort();
+Console.WriteLine($"Отримано: {string.Join(", ", taken)}");
+Console.WriteLine($"Ще один: {tokens.TryTake(out _)}");
+```
+
+**Очікуваний вивід:**
+
+```text
+Є жетон: True
+До вилучення: 3
+Отримано: 5, 5, 9
+Ще один: False
+```
+
+</details>
+
+## Завдання 30. Незалежні результати вимірювань — ConcurrentBag
+
+Для кожного слова запустіть окреме завдання, яке додає пару `(слово, довжина)` у спільний `ConcurrentBag`. Після завершення всіх завдань виведіть звіт за назвою слова. Для порожнього вхідного масиву звіт містить нуль записів.
+
+Локальна змінна `word` усередині циклу дає кожному завданню власне слово. Сортування масиву-знімка впорядковує звіт; сам bag залишається неупорядкованим.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+await Report(new[] { "sun", "rain", "snow" });
+await Report(Array.Empty<string>());
+
+static async Task Report(string[] words)
+{
+    var results = new ConcurrentBag<(string Word, int Length)>();
+    var workers = new Task[words.Length];
+    for (int i = 0; i < words.Length; i++)
+    {
+        string word = words[i];
+        workers[i] = Task.Run(() => results.Add((word, word.Length)));
+    }
+    await Task.WhenAll(workers);
+    var snapshot = results.ToArray();
+    Array.Sort(snapshot, (a, b) => StringComparer.Ordinal.Compare(a.Word, b.Word));
+    foreach (var item in snapshot) Console.WriteLine($"{item.Word}: {item.Length}");
+    Console.WriteLine($"Записів: {snapshot.Length}");
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+rain: 4
+snow: 4
+sun: 3
+Записів: 3
+Записів: 0
 ```
 
 </details>

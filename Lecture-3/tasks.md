@@ -4,7 +4,22 @@
 
 Кожне завдання незалежне; мова — C#. Дані задавайте в коді, без файлів і меню. Тут обираємо колекцію під конкретну операцію. `[]` означає порожню колекцію.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 18 завдань із повними реалізаціями та очікуваним виводом.**
+
+**Черги та конкурентні колекції:**
+
+| Колекція | Що тренуємо | Завдання |
+|---|---|---|
+| `Queue<T>` | Послідовна обробка та обмежені повторні спроби | 13 |
+| `ConcurrentQueue<T>` | FIFO та незалежний масив-знімок | 14 |
+| `ConcurrentStack<T>` | Спільний стек і повернення взятого ресурсу | 15 |
+| `ConcurrentBag<T>` | Кілька споживачів, повтори, невизначений порядок | 16 |
+| `ConcurrentDictionary<TKey, TValue>` | Одна атомарна спроба реєстрації ключа | 17 |
+| `BlockingCollection<T>` над `ConcurrentQueue<T>` | Обмеження буфера, очікування й завершення додавання | 18 |
+
+Для спільного доступу використовуйте операції `Try…` конкурентних колекцій. Перевірка `Count` або `IsEmpty` не гарантує, що наступний виклик ще побачить той самий стан. Доступ до окремого спільного лічильника також потребує синхронізації; у прикладах застосовано `Interlocked`. [Потокобезпечні колекції .NET](https://learn.microsoft.com/en-us/dotnet/standard/collections/thread-safe/).
+
+У `ConcurrentBag<T>` немає позицій і гарантованого порядку; результати сортуємо лише для друку **після** `Task.WhenAll`. Bag дозволяє повтори. Перші приклади `Add`, `TryPeek` та `TryTake` наведено в [Лекції 2](../Lecture-2/tasks.md#завдання-29-жетони-з-повторами--concurrentbag); ці властивості описані в [документації ConcurrentBag](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentbag-1?view=net-10.0).
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -480,6 +495,288 @@ foreach (int[] presses in new[] { new[] { 1, 2, 1, 3, 2, 2 }, new[] { 5, 5 }, Ar
 [2, 3]
 []
 []
+```
+
+</details>
+
+## Завдання 13. Повторна спроба доставки — Queue
+
+У звичайній черзі зберігайте `(назва, номер спроби)`. Повідомлення `B` не доставляється з першої спроби, `X` не доставляється ніколи, а `A` і `C` успішні одразу. Невдале повідомлення поверніть у хвіст, якщо спроб було менше двох. Після другої невдачі виведіть `STOP` і не додавайте його знову.
+
+Це послідовна обробка без спільного доступу. Межа спроб запобігає нескінченному поверненню невдалої роботи в чергу.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var pending = new Queue<(string Name, int Attempt)>();
+foreach (string name in new[] { "A", "B", "C", "X" }) pending.Enqueue((name, 1));
+while (pending.TryDequeue(out var message))
+{
+    bool delivered = message.Name != "X" && (message.Name != "B" || message.Attempt > 1);
+    if (delivered) Console.WriteLine($"{message.Name}: OK");
+    else if (message.Attempt < 2)
+    {
+        Console.WriteLine($"{message.Name}: RETRY");
+        pending.Enqueue((message.Name, message.Attempt + 1));
+    }
+    else Console.WriteLine($"{message.Name}: STOP");
+}
+Console.WriteLine($"Залишок: {pending.Count}");
+```
+
+**Очікуваний вивід:**
+
+```text
+A: OK
+B: RETRY
+C: OK
+X: RETRY
+B: OK
+X: STOP
+Залишок: 0
+```
+
+</details>
+
+## Завдання 14. Знімок черги для звіту — ConcurrentQueue
+
+Збережіть `ToArray()` черги `[10, 20]`. Інше завдання додає `30` і вилучає голову. Дочекайтеся його завершення й порівняйте старий знімок із поточним вмістом: старий масив не змінюється.
+
+Знімок потрібний для звіту, а не для резервування елементів. Після `TryPeek` чи `ToArray` інший працівник усе ще може вилучити елемент. [ToArray у .NET 10](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentqueue-1.toarray?view=net-10.0).
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var queue = new ConcurrentQueue<int>(new[] { 10, 20 });
+int[] before = queue.ToArray();
+await Task.Run(() =>
+{
+    queue.Enqueue(30);
+    queue.TryDequeue(out _);
+});
+Console.WriteLine($"Знімок: {string.Join(", ", before)}");
+Console.WriteLine($"Зараз: {string.Join(", ", queue.ToArray())}");
+Console.WriteLine($"Наступний: {(queue.TryPeek(out int next) ? next.ToString() : "NONE")}");
+Console.WriteLine($"Кількість: {queue.Count}");
+```
+
+**Очікуваний вивід:**
+
+```text
+Знімок: 10, 20
+Зараз: 20, 30
+Наступний: 20
+Кількість: 2
+```
+
+</details>
+
+## Завдання 15. Повернути інструмент у ConcurrentStack
+
+Спільний стек містить два номери інструментів. Два завдання беруть по одному через `TryPop`, виконують роботу й обов’язково повертають номер у `finally`. Після `Task.WhenAll` перевірте кількість виконаних робіт та збереження двох різних інструментів.
+
+Не припускайте, який саме інструмент дістався кожному працівникові: швидкий працівник може повернути його до старту іншого. Окремий спільний лічильник оновлюйте через `Interlocked.Increment`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var tools = new ConcurrentStack<int>(new[] { 101, 102 });
+int completed = 0;
+await Task.WhenAll(Task.Run(UseTool), Task.Run(UseTool));
+int[] available = tools.ToArray();
+Array.Sort(available);
+Console.WriteLine($"Виконано: {completed}");
+Console.WriteLine($"Доступні: {string.Join(", ", available)}");
+Console.WriteLine($"Різних інструментів: {new HashSet<int>(available).Count}");
+
+void UseTool()
+{
+    if (!tools.TryPop(out int tool)) throw new InvalidOperationException("Немає інструмента");
+    try
+    {
+        Interlocked.Increment(ref completed);
+    }
+    finally
+    {
+        tools.Push(tool);
+    }
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+Виконано: 2
+Доступні: 101, 102
+Різних інструментів: 2
+```
+
+</details>
+
+## Завдання 16. Двоє працівників забирають деталі — ConcurrentBag
+
+Bag уже містить деталі з вагами `4, 4, 9, 16`, і додавання завершено. Два працівники забирають деталі через `TryTake`. Кожен повертає власну пару `(кількість, сума)`, а головна програма додає ці підсумки після завершення обох.
+
+Порядок деталей і розподіл між працівниками не визначені. Два значення `4` — дві окремі деталі. Спроба читати порожній bag повинна повернути `false`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var parts = new ConcurrentBag<int>(new[] { 4, 4, 9, 16 });
+var reports = await Task.WhenAll(Task.Run(Consume), Task.Run(Consume));
+int count = 0;
+long sum = 0;
+foreach (var report in reports)
+{
+    count += report.Count;
+    sum += report.Sum;
+}
+Console.WriteLine($"Деталей: {count}");
+Console.WriteLine($"Вага: {sum}");
+Console.WriteLine($"Порожній: {parts.IsEmpty}");
+Console.WriteLine($"Ще одна: {parts.TryTake(out _)}");
+
+(int Count, long Sum) Consume()
+{
+    int localCount = 0;
+    long localSum = 0;
+    while (parts.TryTake(out int weight))
+    {
+        localCount++;
+        localSum += weight;
+    }
+    return (localCount, localSum);
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+Деталей: 4
+Вага: 33
+Порожній: True
+Ще одна: False
+```
+
+</details>
+
+## Завдання 17. Зареєструвати номер один раз — ConcurrentDictionary
+
+Кілька завдань реєструють номери `[1, 2, 1, 3, 2, 4]`. У словнику має бути один запис на номер. Використайте `TryAdd`, а невдалі повторні реєстрації порахуйте через `Interlocked.Increment`.
+
+Не розділяйте дію на `ContainsKey` і додавання: між ними інший працівник може зареєструвати той самий ключ. Друкуйте ключі у відсортованому вигляді після завершення завдань. [TryAdd у .NET 10](https://learn.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2.tryadd?view=net-10.0).
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+var registered = new ConcurrentDictionary<int, string>();
+int duplicates = 0;
+int[] requests = { 1, 2, 1, 3, 2, 4 };
+var workers = new Task[requests.Length];
+for (int i = 0; i < requests.Length; i++)
+{
+    int number = requests[i];
+    workers[i] = Task.Run(() =>
+    {
+        if (!registered.TryAdd(number, "ready")) Interlocked.Increment(ref duplicates);
+    });
+}
+await Task.WhenAll(workers);
+var keys = new List<int>(registered.Keys);
+keys.Sort();
+Console.WriteLine($"Номери: {string.Join(", ", keys)}");
+Console.WriteLine($"Повторів: {duplicates}");
+```
+
+**Очікуваний вивід:**
+
+```text
+Номери: 1, 2, 3, 4
+Повторів: 2
+```
+
+</details>
+
+## Завдання 18. Виробник ще працює — BlockingCollection над ConcurrentQueue
+
+Виробник додає числа `1..4`, а споживач подвоює їх у порядку FIFO. Дозвольте накопичити не більше двох елементів. Використайте `BlockingCollection<int>` над `ConcurrentQueue<int>`, `CompleteAdding` та `GetConsumingEnumerable`.
+
+На відміну від прикладів із наперед заповненою чергою, тут тимчасова порожнеча не означає завершення. Споживач очікує нові дані, доки додавання не завершене й буфер не спорожнів. `BlockingCollection` блокує потік під час очікування; це синхронна обгортка, а не властивість самого `ConcurrentQueue`. [Огляд BlockingCollection](https://learn.microsoft.com/en-us/dotnet/standard/collections/thread-safe/blockingcollection-overview).
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+
+using var buffer = new BlockingCollection<int>(new ConcurrentQueue<int>(), boundedCapacity: 2);
+Task producer = Task.Run(() =>
+{
+    try
+    {
+        for (int number = 1; number <= 4; number++) buffer.Add(number);
+    }
+    finally
+    {
+        buffer.CompleteAdding();
+    }
+});
+Task<List<int>> consumer = Task.Run(() =>
+{
+    var local = new List<int>();
+    foreach (int number in buffer.GetConsumingEnumerable()) local.Add(number * 2);
+    return local;
+});
+await Task.WhenAll(producer, consumer);
+List<int> processed = await consumer;
+Console.WriteLine($"Результат: {string.Join(", ", processed)}");
+Console.WriteLine($"Завершено: {buffer.IsCompleted}");
+```
+
+**Очікуваний вивід:**
+
+```text
+Результат: 2, 4, 6, 8
+Завершено: True
 ```
 
 </details>
