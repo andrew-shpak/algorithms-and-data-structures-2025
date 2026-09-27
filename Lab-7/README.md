@@ -1,5 +1,7 @@
 # Lab 7 - Хеш-таблиці та Dictionary
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Завдання 1: Підрахунок частоти слів з тексту
 
 ### Мета
@@ -16,12 +18,13 @@
 ### Приклад `Program.cs`
 
 ```csharp
-// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
+// Program.cs (.NET 10, <Nullable>enable</Nullable>)
 
 // Функція для підрахунку частоти слів у тексті
 static Dictionary<string, int> CountWords(string text)
 {
     // Ваш код тут (використайте ToLowerInvariant() для ігнорування регістру)
+    throw new NotImplementedException();
 }
 
 string text = "Hello world hello programming " +
@@ -63,11 +66,12 @@ of: 1
 ### Приклад `Program.cs`
 
 ```csharp
-// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
+// Program.cs (.NET 10, <Nullable>enable</Nullable>)
 
 static Dictionary<int, List<int>> GroupByFrequency(int[] arr)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 int[] arr = [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5];
@@ -111,16 +115,18 @@ Console.WriteLine("=== ГРУПУВАННЯ ЗА ЧАСТОТОЮ ===");
 ### Приклад `Program.cs`
 
 ```csharp
-// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
+// Program.cs (.NET 10, <Nullable>enable</Nullable>)
 
 static List<int> FindIntersection(int[] arr1, int[] arr2)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 static List<int> FindUnion(int[] arr1, int[] arr2)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 int[] arr1 = [1, 2, 2, 3, 4, 5];

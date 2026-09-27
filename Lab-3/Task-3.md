@@ -1,5 +1,7 @@
 # Задача 3: Менеджер контактів
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Мета
 Забезпечити мінімальний реєстр контактів із можливістю додати контакт і
 видалити контакт за ім'ям.
@@ -11,13 +13,18 @@
 
 ## Необхідні методи
 ```csharp
+public record Contact(string Name, string Phone, string Email, LinkedList<string> Tags);
+
 public class ContactBook
 {
     private readonly LinkedList<Contact> _contacts = new();
     private readonly HashSet<string> _nameIndex = new();
 
-    public bool AddContact(Contact contact); // false, якщо ім'я вже зайняте
-    public bool RemoveContact(string name);  // false, якщо контакт не знайдено
+    // false, якщо ім'я вже зайняте
+    public bool AddContact(Contact contact) => throw new NotImplementedException();
+
+    // false, якщо контакт не знайдено
+    public bool RemoveContact(string name) => throw new NotImplementedException();
 }
 ```
 

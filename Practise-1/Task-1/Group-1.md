@@ -1,4 +1,7 @@
-#  Задачі по while, for, if, else 
+#  Задачі по while, for, if, else
+
+> **C# / .NET 10.** [Налаштування та запуск](../../LABS.md).
+
 1. Сума і середнє
 ```console
 Введіть кількість чисел: 12 
@@ -46,7 +49,7 @@
 Сума через 2 років = 18984.4
 ```
 5. Підрахунок слів у рядку
-**_Примітка:_**   setlocale(LC_ALL, "uk_UA.UTF-8"); // консоль сприймала кирилицю  
+**_Примітка:_** Для кирилиці використайте `Console.InputEncoding = System.Text.Encoding.UTF8;` і `Console.OutputEncoding = System.Text.Encoding.UTF8;`.
 ```console
 Введіть рядок: Привіт, як справи у Києві сьогодні?
 Кількість слів: 6
@@ -55,7 +58,7 @@
 6.  Клас “Рахунок у банку”
 Клас BankAccount:
 	•	поля: owner, balance;
-	•	методи: deposit(amount), withdraw(amount), printBalance().
+	•	методи: `Deposit(amount)`, `Withdraw(amount)`, `PrintBalance()`.
 Перевіряти, щоб зняття не призводило до від’ємного балансу.
 
 # Даткова задача

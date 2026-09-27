@@ -1,5 +1,7 @@
 # Lab 9 - Збалансовані дерева пошуку
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 Цей лабораторний практикум присвячений вивченню та реалізації збалансованих дерев пошуку: AVL-дерев. Ви навчитесь створювати ці структури даних з нуля та перевіряти їх властивості збалансованості.
 
 ---
@@ -32,7 +34,7 @@
 ### Приклад `Program.cs`
 
 ```csharp
-// Program.cs (.NET 8+, <Nullable>enable</Nullable>)
+// Program.cs (.NET 10, <Nullable>enable</Nullable>)
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 var tree = new AvlTree();
@@ -78,48 +80,56 @@ public sealed class AvlTree
     public void PrintTree()
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Отримати висоту вузла
     private static int GetHeight(Node? node)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Обчислити баланс-фактор вузла
     private static int GetBalance(Node? node)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Праве обертання
     private static Node RotateRight(Node y)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Ліве обертання
     private static Node RotateLeft(Node x)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Вставка з балансуванням
     private static Node InsertHelper(Node? node, int key)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Перевірка збалансованості
     private static bool IsBalancedHelper(Node? node, out int height)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Вивід дерева
     private static void PrintHelper(Node? node, string indent, bool last)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 }
 ```

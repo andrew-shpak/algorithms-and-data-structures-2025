@@ -1,5 +1,7 @@
 # Лабораторна робота 11: Алгоритм Дейкстри
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## [IDE](https://onecompiler.com/csharp)
 
 ---
@@ -46,7 +48,7 @@
 
 **Складність:** O((V + E) log V), де V - кількість вершин, E - кількість ребер
 
-### Приклад `Main`
+### Приклад `Program.cs`
 
 ```csharp
 using System.Text;
@@ -74,12 +76,14 @@ public static class Program
     public static int[] Dijkstra(List<List<Edge>> graph, int start, out int[] parent)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Метод для відновлення та виведення шляху
     public static void PrintPath(int start, int end, int[] parent)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Метод для виведення результатів

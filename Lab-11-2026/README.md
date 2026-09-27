@@ -1,5 +1,7 @@
 # Lab-11-2026 — Пошук найкоротших шляхів (Дейкстра + A*)
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## [IDE](https://onecompiler.com/csharp)
 
 ---
@@ -22,7 +24,7 @@
 
 Увага: `PriorityQueue<TElement, TPriority>` у .NET за замовчуванням — min-heap (першим виходить елемент із найменшим пріоритетом). Для max-heap передайте власний `IComparer<TPriority>` або зберігайте від'ємні пріоритети. Метод оновлення пріоритету відсутній, тому додавайте вершину повторно й пропускайте застарілі записи.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
 ```csharp
 using Graph = System.Collections.Generic.List<System.Collections.Generic.List<Edge>>;
@@ -96,6 +98,7 @@ public static class ShortestPaths
     public static int[] Dijkstra(List<List<Edge>> graph, int start, out int[] parent)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Відновлює шлях від start до end, використовуючи масив parent
@@ -103,6 +106,7 @@ public static class ShortestPaths
     public static List<int> RestorePath(int start, int end, int[] parent)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     public static void PrintResults(int start, int[] dist, int[] parent)
@@ -187,7 +191,7 @@ A* — розширення алгоритму Дейкстри з еврист�
 
 Рухи дозволені у 4 напрямках (вгору, вниз, вліво, вправо), кожен коштує 1.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
 ```csharp
 // Сітка 1: простий шлях з перешкодами
@@ -275,6 +279,7 @@ public static class GridSearch
     public static int Heuristic(Cell a, Cell b)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Алгоритм A*
@@ -285,6 +290,7 @@ public static class GridSearch
     public static List<Cell> AStar(int[,] grid, Cell start, Cell goal, out int visitedCount)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     public static void PrintGrid(int[,] grid, List<Cell> path, Cell start, Cell goal)

@@ -1,5 +1,7 @@
 # Лабораторна робота 10: Обходи графів
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## [IDE](https://onecompiler.com/csharp)
 
 ---
@@ -20,7 +22,7 @@
 
 **Складність:** O(V + E), де V - кількість вершин, E - кількість ребер
 
-### Приклад `Main`
+### Приклад `Program.cs`
 
 ```csharp
 public static class Program
@@ -29,6 +31,7 @@ public static class Program
     public static void Bfs(int start, List<List<int>> graph)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     public static void Main()
@@ -84,7 +87,7 @@ BFS обхід від вершини 2: 2 0 3 1 4
 
 **Складність:** O(V + E), де V - кількість вершин, E - кількість ребер
 
-### Приклад `Main`
+### Приклад `Program.cs`
 
 ```csharp
 public static class Program
@@ -93,6 +96,7 @@ public static class Program
     public static void DfsRecursive(int vertex, List<List<int>> graph, HashSet<int> visited)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Обгортка для рекурсивного DFS

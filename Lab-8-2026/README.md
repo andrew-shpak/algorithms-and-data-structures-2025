@@ -1,8 +1,8 @@
 # Lab-8-2026 — Бінарні дерева
 
-## [IDE](https://onecompiler.com/csharp)
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
 
-> Локально: створіть проєкт командою `dotnet new console`, вставте код у `Program.cs` і запустіть `dotnet run`.
+## [IDE](https://onecompiler.com/csharp)
 
 ---
 
@@ -43,16 +43,19 @@ static Node Insert(Node? root, int value)
 static void Inorder(Node? root)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 static void Preorder(Node? root)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 static void Postorder(Node? root)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 class Node(int data)
@@ -290,6 +293,7 @@ static Node Insert(Node? root, int value)
 static void Inorder(Node? root)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 // Знаходить вузол з мінімальним значенням у дереві
@@ -381,6 +385,7 @@ static Node Insert(Node? root, int value)
 static void Inorder(Node? root)
 {
     // Ваш код тут
+    throw new NotImplementedException();
 }
 
 // Серіалізує дерево у рядок (префіксний обхід, "#" для null)

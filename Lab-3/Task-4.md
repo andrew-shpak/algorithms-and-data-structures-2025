@@ -1,5 +1,7 @@
 # Задача 4: Система замовлень в ресторані
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Мета
 Створити мінімалістичний менеджер замовлень із двома операціями: додати нове
 замовлення та видалити (завершити) замовлення за номером столу.
@@ -14,13 +16,23 @@
 
 ## Необхідні методи
 ```csharp
+public record Order(int TableNumber, LinkedList<string> Dishes, string Status);
+
 public class OrderBook
 {
     private readonly LinkedList<Order> _orders = new();
     private readonly HashSet<string> _menuItems;
 
-    public bool AddOrder(Order order);        // false, якщо страва не з меню або стіл вже має активне замовлення
-    public bool RemoveOrder(int tableNumber); // false, якщо замовлення не знайдено
+    public OrderBook(IEnumerable<string> menuItems)
+    {
+        _menuItems = new HashSet<string>(menuItems);
+    }
+
+    // false, якщо страва не з меню або стіл вже має активне замовлення
+    public bool AddOrder(Order order) => throw new NotImplementedException();
+
+    // false, якщо замовлення не знайдено
+    public bool RemoveOrder(int tableNumber) => throw new NotImplementedException();
 }
 ```
 

@@ -1,5 +1,7 @@
 # Lab 4
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Проєкт «Сума натуральних чисел»
 
 У цьому завданні реалізовано рекурсивний алгоритм, що обчислює суму всіх
@@ -77,8 +79,11 @@ Console.WriteLine(total);  // 12
 // 4. Порівняння рядків без урахування регістру
 Func<string, string, bool> caseInsensitive =
     (a, b) => string.Compare(a, b, StringComparison.OrdinalIgnoreCase) < 0;
-MergeSort(words, 0, words.Count - 1, caseInsensitive);
+Console.WriteLine(caseInsensitive("apple", "BANANA")); // True
 ```
+
+У завданні 4 передайте `caseInsensitive` як аргумент `comp` до власного
+методу `MergeSort` для сортування списку рядків.
 
 ### Лямбда всередині методів
 

@@ -1,6 +1,13 @@
 # Lab 6 - Робота з CSV файлами
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Приклад розв'язання (на основі Practise-2)
+
+Скопіюйте [students.csv](../Practise-2/students.csv) до папки консольного
+проєкту й запускайте `dotnet run` із цієї папки. Приклад читає саме формат
+наданого файлу: ім'я та список оцінок у лапках, вік і курс без лапок.
+Для завдань використовуйте [movies.csv](movies.csv) та [products.csv](products.csv).
 
 ```csharp
 using System.Globalization; // CultureInfo.InvariantCulture

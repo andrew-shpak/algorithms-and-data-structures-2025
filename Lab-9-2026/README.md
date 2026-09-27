@@ -1,5 +1,7 @@
 # Lab-9-2026 — Збалансовані дерева пошуку (AVL)
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## [IDE](https://onecompiler.com/csharp)
 
 ---
@@ -27,7 +29,7 @@ AVL-балансування потребує чотирьох типів обе
 
 Видалення з AVL = BST-видалення + балансування на зворотному шляху рекурсії. Три випадки видалення: листок, один нащадок, два нащадки (заміна на inorder-наступника). Після видалення може знадобитися балансування кількох вузлів на шляху до кореня.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
 ```csharp
 Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -92,48 +94,56 @@ public class AvlTree
     private static int GetHeight(Node? node)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Обчислити баланс-фактор вузла
     private static int GetBalance(Node? node)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Праве обертання
     private static Node RotateRight(Node y)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Ліве обертання
     private static Node RotateLeft(Node x)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Вставка з балансуванням
     private static Node InsertHelper(Node? node, int key)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Перевірка збалансованості
     private static bool IsBalancedHelper(Node? node, out int height)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Знайти вузол з мінімальним ключем
     private static Node FindMin(Node node)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Видалення з перебалансуванням
     private static Node? DeleteHelper(Node? node, int key)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Інфіксний обхід
@@ -149,6 +159,7 @@ public class AvlTree
     private static void PrintHelper(Node? node, string indent, bool last)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     public void Insert(int key) => _root = InsertHelper(_root, key);
@@ -164,6 +175,7 @@ public class AvlTree
     public void PrintTree()
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 }
 ```
@@ -235,7 +247,7 @@ Inorder до видалень: 10 20 25 30 40 50
 
 Не забудьте оновлювати `Size` після вставки та обертань.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
 ```csharp
 var tree = new OrderStatTree();
@@ -278,6 +290,7 @@ public class OrderStatTree
     private static void Update(Node node)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     private static int GetBalance(Node? node) =>
@@ -287,23 +300,27 @@ public class OrderStatTree
     private static Node RotateRight(Node y)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     // Ліве обертання (не забудьте оновити Size!)
     private static Node RotateLeft(Node x)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     private static Node InsertHelper(Node? node, int key)
     {
         // Ваш код тут (аналогічно до Завдання 1, але з оновленням Size)
+        throw new NotImplementedException();
     }
 
     // Пошук k-го найменшого елемента
     private static int KthSmallestHelper(Node node, int k)
     {
         // Ваш код тут
+        throw new NotImplementedException();
     }
 
     public void Insert(int key) => _root = InsertHelper(_root, key);

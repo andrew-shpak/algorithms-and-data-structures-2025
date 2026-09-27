@@ -1,5 +1,7 @@
 # Задача 2: Система управління проектами
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Мета
 Підтримувати перелік проектів у компанії за допомогою двох операцій: додати
 проект і видалити проект.
@@ -13,13 +15,23 @@
 
 ## Необхідні методи
 ```csharp
+public record Project(string Name, string Manager, decimal Budget, LinkedList<string> Members);
+
 public class ProjectRegistry
 {
     private readonly LinkedList<Project> _projects = new();
     private readonly HashSet<string> _companyEmployees;
 
-    public bool AddProject(Project project);        // false, якщо назва зайнята або учасник поза компанією
-    public bool RemoveProject(string projectName);  // false, якщо проект не знайдено
+    public ProjectRegistry(IEnumerable<string> companyEmployees)
+    {
+        _companyEmployees = new HashSet<string>(companyEmployees);
+    }
+
+    // false, якщо назва зайнята або учасник поза компанією
+    public bool AddProject(Project project) => throw new NotImplementedException();
+
+    // false, якщо проект не знайдено
+    public bool RemoveProject(string projectName) => throw new NotImplementedException();
 }
 ```
 

@@ -1,8 +1,8 @@
 # Practise-1 — Складні задачі на масиви (C#)
 
-## [IDE](https://onecompiler.com/csharp)
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
 
-> Локально: створіть проєкт командою `dotnet new console`, вставте код у `Program.cs` і запустіть `dotnet run`.
+## [IDE](https://onecompiler.com/csharp)
 
 **Усього: 5 балів за три задачі.** Заборонено використовувати `Array.Sort`, `Array.Reverse`, LINQ, клас `Math` та готові колекції (`List`, `Queue`, `Stack`, `HashSet`, `Dictionary`) — усі алгоритми пишемо вручну на масивах.
 

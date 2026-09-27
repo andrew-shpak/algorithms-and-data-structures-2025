@@ -1,5 +1,7 @@
 # Lab 5
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Завдання 1: Швидке сортування (Quick Sort)
 
 ### Мета
@@ -12,11 +14,12 @@
 - **Бали:** 3.
 - **Складність:** середня O(n log n), найгірша O(n²) при поганому виборі опорного елемента.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
 ```csharp
 static void QuickSort(List<int> arr, int left, int right)
 {
+    throw new NotImplementedException(); // реалізуйте
 }
 
 List<int> arr = [5, 2, 9, 1, 7, 3];
@@ -51,11 +54,12 @@ Console.WriteLine($"Відсортований масив: {string.Join(' ', arr
 - **Складність:** O(n²) в середньому випадку, O(n) для майже відсортованих масивів.
 - **Переваги:** стабільне сортування, працює "на місці", ефективне для малих даних.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
 ```csharp
 static void InsertionSort(List<int> arr)
 {
+    throw new NotImplementedException(); // реалізуйте
 }
 
 List<int> arr = [5, 2, 9, 1, 3];
@@ -86,11 +90,12 @@ Console.WriteLine($"Відсортований масив: {string.Join(' ', arr
 - **Бали:** 2.
 - **Складність:** O(n) час, O(n) пам'ять для стека.
 
-### Приклад `main`
+### Приклад `Program.cs`
 
 ```csharp
 static bool IsBalanced(string s)
 {
+    throw new NotImplementedException(); // реалізуйте
 }
 
 // Тестові випадки з очікуваними результатами

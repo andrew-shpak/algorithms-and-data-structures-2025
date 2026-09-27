@@ -1,5 +1,7 @@
 # Задача 1: Система управління бібліотекою
 
+> **C# / .NET 10.** [Налаштування та запуск](../LABS.md).
+
 ## Мета
 Розробити мінімальний модуль обліку книжок із двома операціями: додати книгу та
 видалити книгу за ISBN.
@@ -12,13 +14,18 @@
 
 ## Необхідні методи
 ```csharp
+public record Book(string Title, string Author, string Isbn, int Year);
+
 public class Library
 {
     private readonly LinkedList<Book> _books = new();
     private readonly HashSet<string> _isbnIndex = new();
 
-    public bool AddBook(Book book);      // false, якщо ISBN вже існує
-    public bool RemoveBook(string isbn); // false, якщо ISBN не знайдено
+    // false, якщо ISBN вже існує
+    public bool AddBook(Book book) => throw new NotImplementedException();
+
+    // false, якщо ISBN не знайдено
+    public bool RemoveBook(string isbn) => throw new NotImplementedException();
 }
 ```
 
