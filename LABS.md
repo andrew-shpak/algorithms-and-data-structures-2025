@@ -41,7 +41,7 @@ CSV-файли копіюйте до папки проєкту й запуска
 |---|---|---|
 | [Practise-1](Practise-1/Readme.md) | Масиви | [Група 1](Practise-1/Task-1/Group-1.md), [група 2](Practise-1/Task-1/Group-2.md), [група 3](Practise-1/Task-1/Group-3.md) |
 | [Practise-2](Practise-2/Readme.md) | Читання CSV, рядки та списки | [Завдання](Practise-2/Task.md) |
-| [Lab 2](Lab-2/README.md) | Реалізація та алгоритми для `Stack`, `List`, `LinkedList` | Оберіть пару для однієї структури: 1 + 4, 2 + 5 або 3 + 6 (3 + 2 бали) |
+| [Lab 2](Lab-2/README.md) | Алгоритми для `HashSet`, `List`, `Stack` і `Queue` | Одне випадкове завдання з п'яти; 30 хвилин; 5 балів |
 | [Lab 3](Lab-3/Readme.md) | Зв'язні списки та множини | [Бібліотека](Lab-3/Task-1.md), [проєкти](Lab-3/Task-2.md), [контакти](Lab-3/Task-3.md), [замовлення](Lab-3/Task-4.md) |
 | [Lab 4](lab-4/Readme.md) | Рекурсія та узагальнені методи | [Завдання](lab-4/Tasks.md) |
 | [Lab 5](Lab-5/README.md) | Сортування та стек | У матеріалі |
