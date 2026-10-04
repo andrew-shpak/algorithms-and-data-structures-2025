@@ -4,7 +4,7 @@
 
 Виконуйте кожне завдання як окремий метод C#. Для рекурсії спочатку запишіть базовий випадок словами. Вхідні дані невеликі; файли й інтерактивне меню не потрібні.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 15 завдань із повними реалізаціями та очікуваним виводом.**
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -468,6 +468,111 @@ static Func<int, int> Compose(Func<int, int> first, Func<int, int> second)
 18
 14
 -4
+```
+
+</details>
+
+## Завдання 13. Рекурсивна сума масиву
+
+Метод `Sum(int[] values, int index)` повертає суму елементів від `index` до кінця. Початковий виклик має `index = 0`; масив містить не більше `100` чисел від `-100` до `100`.
+
+**Вимоги:** не використовуйте цикли, LINQ або копіювання частин масиву. Коли `index == values.Length`, поверніть `0`; інакше додайте поточний елемент до результату наступного виклику. Початковий масив не змінюйте.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+Console.WriteLine(Sum(new[] { 4, -2, 7 }, 0));
+Console.WriteLine(Sum(new[] { -5 }, 0));
+Console.WriteLine(Sum(Array.Empty<int>(), 0));
+
+static int Sum(int[] values, int index)
+{
+    if (index == values.Length) return 0;
+    return values[index] + Sum(values, index + 1);
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+9
+-5
+0
+```
+
+</details>
+
+## Завдання 14. Відібрати елементи будь-якого типу
+
+Напишіть `Filter<T>(T[] values, Func<T, bool> predicate)`, що повертає новий список елементів, для яких умова істинна. Збережіть початковий порядок і повтори; вхідний масив не змінюйте.
+
+**Вимоги:** один узагальнений метод і звичайний цикл, без LINQ. Передайте лямбду для парних чисел і лямбду для слів довжиною не менше чотирьох символів. Порожній масив або відсутність збігів дають порожній список.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine($"[{string.Join(", ", Filter(new[] { 3, 2, 4, 2 }, x => x % 2 == 0))}]");
+Console.WriteLine($"[{string.Join(", ", Filter(new[] { "cat", "tree", "house" }, x => x.Length >= 4))}]");
+Console.WriteLine($"[{string.Join(", ", Filter(new[] { 1, 3 }, x => x % 2 == 0))}]");
+Console.WriteLine($"[{string.Join(", ", Filter(Array.Empty<string>(), x => x.Length >= 4))}]");
+
+static List<T> Filter<T>(T[] values, Func<T, bool> predicate)
+{
+    var result = new List<T>();
+    foreach (T value in values)
+        if (predicate(value)) result.Add(value);
+    return result;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[2, 4, 2]
+[tree, house]
+[]
+[]
+```
+
+</details>
+
+## Завдання 15. Менше з двох значень — обмеження generics
+
+Метод `Min<T>(T first, T second)` повертає менше значення, а за рівності — перше. Обмежте тип через `where T : IComparable<T>` і викличте `CompareTo`; сортування та приведення до `object` не потрібні.
+
+**Самоперевірка:** поясніть, чому без обмеження компілятор не дозволяє викликати `CompareTo` для довільного `T`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Globalization;
+
+Console.WriteLine(Min(8, 3));
+Console.WriteLine(Min(-2, -2));
+Console.WriteLine(Min(new DateOnly(2026, 5, 10), new DateOnly(2026, 5, 1))
+    .ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+
+static T Min<T>(T first, T second) where T : IComparable<T>
+{
+    return first.CompareTo(second) <= 0 ? first : second;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+3
+-2
+2026-05-01
 ```
 
 </details>

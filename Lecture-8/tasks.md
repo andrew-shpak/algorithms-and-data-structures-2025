@@ -4,7 +4,7 @@
 
 Ця папка присвячена DSU; [завдання на бінарні дерева](../Lecture-8-9/tasks.md) містяться окремо. Реалізації нижче написані на C#. Об'єкти нумеруються від `0` до `n - 1`. У задачах 1 і 4 масив `parent` уже заданий і утворює коректний ліс: корінь посилається сам на себе.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 15 завдань із повними реалізаціями та очікуваним виводом.**
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -802,6 +802,226 @@ public sealed class Dsu
 ```text
 3
 1
+0
+```
+
+</details>
+
+## Завдання 13. Сума запасів об’єднаної групи
+
+Кожен об’єкт має початковий запас від `0` до `100`. Реалізуйте DSU з методами `Union(a, b)` і `Total(x)`: другий повертає суму запасів усієї компоненти об’єкта `x`.
+
+**Вимоги:** зберігайте суму типу `long` у корені та оновлюйте її лише при злитті різних компонент. Повторне з’єднання й з’єднання об’єкта із собою не змінюють суму. Використайте об’єднання за розміром і стиснення шляхів.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+var dsu = new SupplyDsu(new[] { 4, 7, 2, 5 });
+Console.WriteLine(dsu.Total(0));
+dsu.Union(0, 1);
+Console.WriteLine(dsu.Total(1));
+dsu.Union(1, 2);
+Console.WriteLine(dsu.Total(0));
+dsu.Union(0, 2);
+dsu.Union(0, 0);
+Console.WriteLine(dsu.Total(2));
+Console.WriteLine(dsu.Total(3));
+
+public sealed class SupplyDsu
+{
+    private readonly int[] _parent;
+    private readonly int[] _size;
+    private readonly long[] _total;
+
+    public SupplyDsu(int[] supplies)
+    {
+        _parent = new int[supplies.Length];
+        _size = new int[supplies.Length];
+        _total = new long[supplies.Length];
+        for (int i = 0; i < supplies.Length; i++)
+        {
+            _parent[i] = i;
+            _size[i] = 1;
+            _total[i] = supplies[i];
+        }
+    }
+
+    public int Find(int x)
+    {
+        if (_parent[x] != x) _parent[x] = Find(_parent[x]);
+        return _parent[x];
+    }
+
+    public long Total(int x) => _total[Find(x)];
+
+    public void Union(int a, int b)
+    {
+        a = Find(a);
+        b = Find(b);
+        if (a == b) return;
+        if (_size[a] < _size[b]) (a, b) = (b, a);
+        _parent[b] = a;
+        _size[a] += _size[b];
+        _total[a] += _total[b];
+    }
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+4
+11
+13
+13
+5
+```
+
+</details>
+
+## Завдання 14. Сумісність вимог до груп
+
+Дано `n` об’єктів, пари `together`, які мають належати одній групі, та пари `apart`, які мають належати різним групам. Перевірте, чи можна виконати всі вимоги. Кількість груп не обмежена; усі індекси коректні.
+
+**Вимоги:** спочатку об’єднайте всі пари `together`, потім перевірте корені кожної пари `apart`. Транзитивні зв’язки також враховуйте. Вимога відокремити об’єкт від самого себе неможлива; порожні вимоги сумісні.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+Console.WriteLine(CanGroup(4, new[] { (0, 1), (1, 2) }, new[] { (0, 3) }));
+Console.WriteLine(CanGroup(4, new[] { (0, 1), (1, 2) }, new[] { (0, 2) }));
+Console.WriteLine(CanGroup(1, Array.Empty<(int, int)>(), new[] { (0, 0) }));
+Console.WriteLine(CanGroup(0, Array.Empty<(int, int)>(), Array.Empty<(int, int)>()));
+
+static bool CanGroup(int n, (int A, int B)[] together, (int A, int B)[] apart)
+{
+    var dsu = new Dsu(n);
+    foreach (var pair in together) dsu.Union(pair.A, pair.B);
+    foreach (var pair in apart)
+        if (dsu.Find(pair.A) == dsu.Find(pair.B)) return false;
+    return true;
+}
+
+public sealed class Dsu
+{
+    private readonly int[] _parent;
+    private readonly int[] _size;
+    public int Count { get; private set; }
+
+    public Dsu(int n)
+    {
+        _parent = new int[n];
+        _size = new int[n];
+        Count = n;
+        for (int i = 0; i < n; i++) { _parent[i] = i; _size[i] = 1; }
+    }
+
+    public int Find(int x)
+    {
+        if (_parent[x] != x) _parent[x] = Find(_parent[x]);
+        return _parent[x];
+    }
+
+    public bool Union(int a, int b)
+    {
+        a = Find(a);
+        b = Find(b);
+        if (a == b) return false;
+        if (_size[a] < _size[b]) (a, b) = (b, a);
+        _parent[b] = a;
+        _size[a] += _size[b];
+        Count--;
+        return true;
+    }
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+True
+False
+False
+True
+```
+
+</details>
+
+## Завдання 15. Коли мережа стала зв’язною
+
+Кабелі між `n` об’єктами додають у заданому порядку. Поверніть номер першої операції, після якої всі об’єкти з’єднані, рахуючи операції від `1`. Якщо цього не сталося, поверніть `-1`. Для `n = 0` або `n = 1` поверніть `0`: додавати кабелі не потрібно.
+
+**Вимоги:** підтримуйте кількість компонент через DSU. Повторний кабель або петля також займають номер операції, але не зменшують кількість компонент. Індекси кінців кабелів коректні.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+Console.WriteLine(FirstConnected(4, new[] { (0, 1), (0, 1), (2, 3), (1, 2) }));
+Console.WriteLine(FirstConnected(3, new[] { (0, 0), (0, 1) }));
+Console.WriteLine(FirstConnected(1, Array.Empty<(int, int)>()));
+Console.WriteLine(FirstConnected(0, Array.Empty<(int, int)>()));
+
+static int FirstConnected(int n, (int A, int B)[] cables)
+{
+    if (n <= 1) return 0;
+    var dsu = new Dsu(n);
+    for (int i = 0; i < cables.Length; i++)
+    {
+        dsu.Union(cables[i].A, cables[i].B);
+        if (dsu.Count == 1) return i + 1;
+    }
+    return -1;
+}
+
+public sealed class Dsu
+{
+    private readonly int[] _parent;
+    private readonly int[] _size;
+    public int Count { get; private set; }
+
+    public Dsu(int n)
+    {
+        _parent = new int[n];
+        _size = new int[n];
+        Count = n;
+        for (int i = 0; i < n; i++) { _parent[i] = i; _size[i] = 1; }
+    }
+
+    public int Find(int x)
+    {
+        if (_parent[x] != x) _parent[x] = Find(_parent[x]);
+        return _parent[x];
+    }
+
+    public bool Union(int a, int b)
+    {
+        a = Find(a);
+        b = Find(b);
+        if (a == b) return false;
+        if (_size[a] < _size[b]) (a, b) = (b, a);
+        _parent[b] = a;
+        _size[a] += _size[b];
+        Count--;
+        return true;
+    }
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+4
+-1
+0
 0
 ```
 

@@ -4,7 +4,7 @@
 
 Використовуйте C# і вузол із полями `Value`, `Left`, `Right`; відсутня дитина — `null`. Невеликі дерева створюйте вручну. Запис `v(left, right)` нижче описує дерево, `—` — відсутню дитину, а число без дужок — листок. Парсер цього запису реалізовувати не потрібно.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 15 завдань із повними реалізаціями та очікуваним виводом.**
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -616,6 +616,169 @@ True
 False
 True
 True
+```
+
+</details>
+
+## Завдання 13. Висота дерева у вузлах
+
+Рекурсивно знайдіть висоту дерева як найбільшу кількість вузлів на шляху від кореня до листка. Висота порожнього дерева — `0`, листка — `1`; глибина заданих дерев не перевищує `100`.
+
+**Вимоги:** для непорожнього вузла поверніть `1 + Math.Max(висота лівого, висота правого)`. Дерево не змінюйте. Перевірте дерево з однією довгою гілкою.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+var root = new Node(4, new Node(2), new Node(7, new Node(6), null));
+Console.WriteLine(Height(root));
+Console.WriteLine(Height(new Node(1, null, new Node(2, null, new Node(3)))));
+Console.WriteLine(Height(new Node(9)));
+Console.WriteLine(Height(null));
+
+static int Height(Node? node)
+{
+    if (node is null) return 0;
+    return 1 + Math.Max(Height(node.Left), Height(node.Right));
+}
+
+public sealed class Node(int value, Node? left = null, Node? right = null)
+{
+    public int Value = value;
+    public Node? Left = left;
+    public Node? Right = right;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+3
+3
+1
+0
+```
+
+</details>
+
+## Завдання 14. k-й найменший ключ BST
+
+У бінарному дереві пошуку всі ключі різні. Знайдіть `k`-й найменший ключ, рахуючи від `1`, або поверніть `null`, якщо `k ≤ 0` чи вузлів менше за `k`.
+
+**Вимоги:** виконайте ітеративний inorder-обхід через `Stack<Node>` і зупиніться на потрібному вузлі. Не збирайте всі ключі в масив і не сортуйте їх. Дерево не змінюйте.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var root = new Node(5, new Node(2, new Node(1), new Node(4)), new Node(8));
+foreach (int k in new[] { 1, 3, 5, 6, 0 })
+    Console.WriteLine(KthSmallest(root, k)?.ToString() ?? "NONE");
+Console.WriteLine(KthSmallest(null, 1)?.ToString() ?? "NONE");
+
+static int? KthSmallest(Node? root, int k)
+{
+    if (k <= 0) return null;
+    var stack = new Stack<Node>();
+    Node? current = root;
+    while (current is not null || stack.Count > 0)
+    {
+        while (current is not null)
+        {
+            stack.Push(current);
+            current = current.Left;
+        }
+        Node node = stack.Pop();
+        if (--k == 0) return node.Value;
+        current = node.Right;
+    }
+    return null;
+}
+
+public sealed class Node(int value, Node? left = null, Node? right = null)
+{
+    public int Value = value;
+    public Node? Left = left;
+    public Node? Right = right;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+1
+4
+8
+NONE
+NONE
+NONE
+```
+
+</details>
+
+## Завдання 15. Окремий рядок для кожного рівня
+
+Поверніть список рівнів бінарного дерева. На кожному рівні ключі мають іти зліва направо. Для порожнього дерева поверніть порожній список; повторні ключі дозволені.
+
+**Вимоги:** використайте `Queue<Node>`. Перед обробкою рівня запам’ятайте кількість вузлів у черзі й обробіть рівно стільки вузлів; їхніх дітей додайте в хвіст. Кожен вузол відвідайте один раз.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var root = new Node(4, new Node(2, null, new Node(3)), new Node(7, new Node(6), null));
+foreach (List<int> level in Levels(root))
+    Console.WriteLine($"[{string.Join(", ", level)}]");
+foreach (List<int> level in Levels(new Node(9)))
+    Console.WriteLine($"[{string.Join(", ", level)}]");
+Console.WriteLine($"Empty levels={Levels(null).Count}");
+
+static List<List<int>> Levels(Node? root)
+{
+    var result = new List<List<int>>();
+    if (root is null) return result;
+    var queue = new Queue<Node>();
+    queue.Enqueue(root);
+    while (queue.Count > 0)
+    {
+        int count = queue.Count;
+        var level = new List<int>();
+        for (int i = 0; i < count; i++)
+        {
+            Node node = queue.Dequeue();
+            level.Add(node.Value);
+            if (node.Left is not null) queue.Enqueue(node.Left);
+            if (node.Right is not null) queue.Enqueue(node.Right);
+        }
+        result.Add(level);
+    }
+    return result;
+}
+
+public sealed class Node(int value, Node? left = null, Node? right = null)
+{
+    public int Value = value;
+    public Node? Left = left;
+    public Node? Right = right;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[4]
+[2, 7]
+[3, 6]
+[9]
+Empty levels=0
 ```
 
 </details>

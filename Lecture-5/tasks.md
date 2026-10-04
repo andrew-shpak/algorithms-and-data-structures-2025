@@ -4,7 +4,7 @@
 
 Почніть із перевірки порядку й окремих кроків, потім переходьте до повних алгоритмів. Пишіть на C#, задавайте масиви в коді. У завданнях 1–6 та 8–10 реалізуйте кроки самостійно; готове сортування дозволено лише там, де це прямо вказано.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 15 завдань із повними реалізаціями та очікуваним виводом.**
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -518,6 +518,146 @@ static bool IsStable((int Key, string Id)[] original, (int Key, string Id)[] sor
 True
 False
 True
+```
+
+</details>
+
+## Завдання 13. Сортування вставками
+
+Відсортуйте масив за неспаданням на місці. Починаючи з другого елемента, збережіть його в окремій змінній, посуньте більші елементи впорядкованої частини праворуч і вставте збережене значення.
+
+**Вимоги:** без готового сортування й додаткового масиву. Рівні елементи не пересувайте один через одного. Перевірте повтори, від’ємні числа, порожній масив і один елемент.
+
+**Питання:** чому для вже впорядкованого масиву достатньо O(n) порівнянь?
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+int[][] examples =
+{
+    new[] { 5, 2, 4, 2, -1 }, new[] { 1, 2, 3 },
+    Array.Empty<int>(), new[] { 7 }
+};
+foreach (int[] values in examples)
+{
+    InsertionSort(values);
+    Console.WriteLine($"[{string.Join(", ", values)}]");
+}
+
+static void InsertionSort(int[] values)
+{
+    for (int i = 1; i < values.Length; i++)
+    {
+        int current = values[i];
+        int j = i - 1;
+        while (j >= 0 && values[j] > current)
+        {
+            values[j + 1] = values[j];
+            j--;
+        }
+        values[j + 1] = current;
+    }
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[-1, 2, 2, 4, 5]
+[1, 2, 3]
+[]
+[7]
+```
+
+</details>
+
+## Завдання 14. Злиття двох упорядкованих рядів
+
+Два масиви вже впорядковані за неспаданням. Створіть третій упорядкований масив із усіма їхніми елементами, зберігаючи повтори. Початкові масиви не змінюйте.
+
+**Вимоги:** використайте два індекси та O(n + m) часу, без готового сортування. За рівності беріть елемент першого масиву; коли один масив закінчиться, перенесіть решту іншого.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+Console.WriteLine($"[{string.Join(", ", Merge(new[] { 1, 3, 3 }, new[] { 2, 3, 5 }))}]");
+Console.WriteLine($"[{string.Join(", ", Merge(Array.Empty<int>(), new[] { -2, 4 }))}]");
+Console.WriteLine($"[{string.Join(", ", Merge(new[] { 1 }, Array.Empty<int>()))}]");
+Console.WriteLine($"[{string.Join(", ", Merge(Array.Empty<int>(), Array.Empty<int>()))}]");
+
+static int[] Merge(int[] first, int[] second)
+{
+    int[] result = new int[first.Length + second.Length];
+    int i = 0, j = 0, k = 0;
+    while (i < first.Length && j < second.Length)
+        result[k++] = first[i] <= second[j] ? first[i++] : second[j++];
+    while (i < first.Length) result[k++] = first[i++];
+    while (j < second.Length) result[k++] = second[j++];
+    return result;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[1, 2, 3, 3, 3, 5]
+[-2, 4]
+[1]
+[]
+```
+
+</details>
+
+## Завдання 15. Рейтинг за двома ключами
+
+Записи містять унікальне ім’я та кількість балів. Упорядкуйте їх спочатку за спаданням балів, а за однакових балів — за зростанням імені через `StringComparer.Ordinal`.
+
+**Вимоги:** у цьому завданні дозволено `Array.Sort` із власним порівнянням. Порівнюйте бали через `CompareTo`, без віднімання. Перевірте однакові бали та порожній масив.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+var players = new[]
+{
+    new Player("Ira", 8), new Player("Bohdan", 10),
+    new Player("Anna", 10), new Player("Danylo", 8)
+};
+SortRanking(players);
+foreach (Player player in players)
+    Console.WriteLine($"{player.Name}: {player.Score}");
+var empty = Array.Empty<Player>();
+SortRanking(empty);
+Console.WriteLine($"Count={empty.Length}");
+
+static void SortRanking(Player[] players)
+{
+    Array.Sort(players, (first, second) =>
+    {
+        int byScore = second.Score.CompareTo(first.Score);
+        return byScore != 0 ? byScore : StringComparer.Ordinal.Compare(first.Name, second.Name);
+    });
+}
+
+public sealed record Player(string Name, int Score);
+```
+
+**Очікуваний вивід:**
+
+```text
+Anna: 10
+Bohdan: 10
+Danylo: 8
+Ira: 8
+Count=0
 ```
 
 </details>

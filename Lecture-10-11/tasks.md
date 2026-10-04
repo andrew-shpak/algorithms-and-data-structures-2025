@@ -4,7 +4,7 @@
 
 Мова — C#. Вершини нумеруються від `0` до `n - 1`; ребра задавайте в коді. Якщо не сказано інакше, петель і повторних ребер немає. Завдання незалежні: тут тренуємо властивості та представлення графа, перевірку маршруту й залежності.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 15 завдань із повними реалізаціями та очікуваним виводом.**
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -585,6 +585,171 @@ static void Subdivide(int n, (int U, int V)[] edges)
 ```text
 Vertices=5; edges=[(0, 3), (3, 1), (1, 4), (4, 2)]
 Vertices=2; edges=[]
+```
+
+</details>
+
+## Завдання 13. Відстані від старту — BFS
+
+Для неорієнтованого незваженого графа поверніть мінімальну кількість ребер від `start` до кожної вершини. Для недосяжних вершин використайте `-1`; відстань від старту до себе — `0`. Граф непорожній, `start` та кінці ребер коректні.
+
+**Вимоги:** побудуйте списки суміжності й виконайте BFS через `Queue<int>`. Позначайте вершину відвіданою, коли додаєте її в чергу, щоб не додавати повторно. Перевірте ізольовану вершину й граф із циклом.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var edges = new[] { (0, 1), (0, 2), (1, 3), (2, 3), (3, 4) };
+Console.WriteLine($"[{string.Join(", ", Distances(6, edges, 0))}]");
+Console.WriteLine($"[{string.Join(", ", Distances(6, edges, 5))}]");
+Console.WriteLine($"[{string.Join(", ", Distances(1, Array.Empty<(int, int)>(), 0))}]");
+
+static int[] Distances(int n, (int U, int V)[] edges, int start)
+{
+    var graph = new List<int>[n];
+    for (int i = 0; i < n; i++) graph[i] = new List<int>();
+    foreach (var edge in edges)
+    {
+        graph[edge.U].Add(edge.V);
+        graph[edge.V].Add(edge.U);
+    }
+    int[] distance = new int[n];
+    Array.Fill(distance, -1);
+    var queue = new Queue<int>();
+    distance[start] = 0;
+    queue.Enqueue(start);
+    while (queue.TryDequeue(out int vertex))
+        foreach (int neighbor in graph[vertex])
+            if (distance[neighbor] == -1)
+            {
+                distance[neighbor] = distance[vertex] + 1;
+                queue.Enqueue(neighbor);
+            }
+    return distance;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[0, 1, 1, 2, 3, -1]
+[-1, -1, -1, -1, -1, 0]
+[0]
+```
+
+</details>
+
+## Завдання 14. Порахувати компоненти через явний стек
+
+Порахуйте компоненти зв’язності неорієнтованого графа. Ізольована вершина утворює власну компоненту; граф без вершин має `0` компонент. Кінці ребер коректні.
+
+**Вимоги:** запустіть новий ітеративний DFS з кожної ще не відвіданої вершини. Використайте `Stack<int>` і позначайте вершини під час додавання в стек. Не використовуйте DSU.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine(ComponentCount(6, new[] { (0, 1), (1, 2), (0, 2), (3, 4) }));
+Console.WriteLine(ComponentCount(3, Array.Empty<(int, int)>()));
+Console.WriteLine(ComponentCount(0, Array.Empty<(int, int)>()));
+
+static int ComponentCount(int n, (int U, int V)[] edges)
+{
+    var graph = new List<int>[n];
+    for (int i = 0; i < n; i++) graph[i] = new List<int>();
+    foreach (var edge in edges)
+    {
+        graph[edge.U].Add(edge.V);
+        graph[edge.V].Add(edge.U);
+    }
+    bool[] visited = new bool[n];
+    var stack = new Stack<int>();
+    int components = 0;
+    for (int start = 0; start < n; start++)
+    {
+        if (visited[start]) continue;
+        components++;
+        visited[start] = true;
+        stack.Push(start);
+        while (stack.TryPop(out int vertex))
+            foreach (int neighbor in graph[vertex])
+                if (!visited[neighbor])
+                {
+                    visited[neighbor] = true;
+                    stack.Push(neighbor);
+                }
+    }
+    return components;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+3
+3
+0
+```
+
+</details>
+
+## Завдання 15. Цикл у напрямленому графі
+
+Перевірте, чи є цикл у напрямленому графі з `0 ≤ n ≤ 100`. Кінці ребер коректні; у цьому завданні петлі дозволені й також утворюють цикл.
+
+**Вимоги:** використайте DFS і три стани: `0` — не відвідана вершина, `1` — зараз у стеку рекурсії, `2` — повністю оброблена. Ребро до вершини зі станом `1` означає цикл; ребро до стану `2` саме по собі циклу не означає. Перевірте всі компоненти графа.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine(HasCycle(4, new[] { (0, 1), (0, 2), (1, 3), (2, 3) }));
+Console.WriteLine(HasCycle(3, new[] { (0, 1), (1, 2), (2, 0) }));
+Console.WriteLine(HasCycle(4, new[] { (0, 1), (2, 3), (3, 2) }));
+Console.WriteLine(HasCycle(1, new[] { (0, 0) }));
+Console.WriteLine(HasCycle(0, Array.Empty<(int, int)>()));
+
+static bool HasCycle(int n, (int From, int To)[] edges)
+{
+    var graph = new List<int>[n];
+    for (int i = 0; i < n; i++) graph[i] = new List<int>();
+    foreach (var edge in edges) graph[edge.From].Add(edge.To);
+    int[] state = new int[n];
+    for (int vertex = 0; vertex < n; vertex++)
+        if (state[vertex] == 0 && Visit(vertex)) return true;
+    return false;
+
+    bool Visit(int vertex)
+    {
+        state[vertex] = 1;
+        foreach (int neighbor in graph[vertex])
+        {
+            if (state[neighbor] == 1) return true;
+            if (state[neighbor] == 0 && Visit(neighbor)) return true;
+        }
+        state[vertex] = 2;
+        return false;
+    }
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+False
+True
+True
+True
+False
 ```
 
 </details>

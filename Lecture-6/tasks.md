@@ -4,7 +4,7 @@
 
 Кожну задачу виконуйте окремо на C#. Дані задавайте в коді. Тут практикуємо обробку послідовностей; для всіх задач достатньо звичайних `Stack<T>` і `Queue<T>`. Два приклади відкриті, решта реалізацій — у розгортних блоках.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 15 завдань із повними реалізаціями та очікуваним виводом.**
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -518,6 +518,140 @@ static bool CanUnload(int[] incoming, int[] outgoing)
 True
 False
 True
+```
+
+</details>
+
+## Завдання 13. Три види дужок — Stack
+
+Перевірте правильність вкладення дужок `()`, `[]` і `{}`. Решту символів ігноруйте. Порожній рядок правильний; закривальна дужка без відповідної відкривальної робить рядок неправильним.
+
+**Вимоги:** використайте `Stack<char>` і `TryPop`. Для кожної закривальної дужки перевірте тип останньої відкривальної. Після проходу стек має бути порожнім.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (string text in new[] { "a{b[c](d)}", "([)]", "(", "]", "", "abc" })
+    Console.WriteLine(IsBalanced(text));
+
+static bool IsBalanced(string text)
+{
+    var stack = new Stack<char>();
+    foreach (char symbol in text)
+    {
+        if (symbol is '(' or '[' or '{') stack.Push(symbol);
+        else if (symbol is ')' or ']' or '}')
+        {
+            char expected = symbol switch { ')' => '(', ']' => '[', _ => '{' };
+            if (!stack.TryPop(out char opening) || opening != expected) return false;
+        }
+    }
+    return stack.Count == 0;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+True
+False
+False
+False
+True
+True
+```
+
+</details>
+
+## Завдання 14. Розвернути початок черги
+
+Змініть порядок перших `k` елементів черги на зворотний, залишивши решту в початковому порядку. `0 ≤ k ≤ queue.Count`; змінюйте саме передану чергу.
+
+**Вимоги:** перенесіть перші `k` елементів у стек і поверніть їх у чергу. Потім перемістіть решту початкових елементів із голови в хвіст, щоб розвернута частина опинилася на початку. Без масивів і списків.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+foreach (int k in new[] { 3, 0, 5 })
+{
+    var queue = new Queue<int>(new[] { 1, 2, 3, 4, 5 });
+    ReversePrefix(queue, k);
+    Console.WriteLine($"[{string.Join(", ", queue)}]");
+}
+var empty = new Queue<int>();
+ReversePrefix(empty, 0);
+Console.WriteLine($"[{string.Join(", ", empty)}]");
+
+static void ReversePrefix(Queue<int> queue, int k)
+{
+    int unchanged = queue.Count - k;
+    var stack = new Stack<int>();
+    for (int i = 0; i < k; i++) stack.Push(queue.Dequeue());
+    while (stack.TryPop(out int value)) queue.Enqueue(value);
+    for (int i = 0; i < unchanged; i++) queue.Enqueue(queue.Dequeue());
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[3, 2, 1, 4, 5]
+[1, 2, 3, 4, 5]
+[5, 4, 3, 2, 1]
+[]
+```
+
+</details>
+
+## Завдання 15. Суми останніх k вимірювань
+
+Для кожного повного вікна з `k` послідовних вимірювань поверніть його суму. `k > 0`; якщо вимірювань менше за `k`, результат порожній.
+
+**Вимоги:** зберігайте в `Queue<int>` не більше `k` останніх значень і підтримуйте суму типу `long`. Не додавайте всі елементи вікна заново на кожному кроці: загальний час — O(n), додаткова пам’ять для черги — O(k).
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+Console.WriteLine($"[{string.Join(", ", WindowSums(new[] { 2, 5, -1, 4 }, 3))}]");
+Console.WriteLine($"[{string.Join(", ", WindowSums(new[] { 2, -1 }, 1))}]");
+Console.WriteLine($"[{string.Join(", ", WindowSums(new[] { 2 }, 3))}]");
+Console.WriteLine($"[{string.Join(", ", WindowSums(Array.Empty<int>(), 2))}]");
+
+static List<long> WindowSums(int[] values, int k)
+{
+    var window = new Queue<int>();
+    var result = new List<long>();
+    long sum = 0;
+    foreach (int value in values)
+    {
+        if (window.Count == k) sum -= window.Dequeue();
+        window.Enqueue(value);
+        sum += value;
+        if (window.Count == k) result.Add(sum);
+    }
+    return result;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+[6, 8]
+[2, -1]
+[]
+[]
 ```
 
 </details>

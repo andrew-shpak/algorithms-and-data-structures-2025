@@ -2,9 +2,9 @@
 
 [Матеріал лекції](Examples.md)
 
-Працюємо з маленькими таблицями на C#. Спочатку намалюйте комірки на папері, потім відтворіть кроки програмою. Усі ключі — невід'ємні цілі числа; хеш-функція в цих вправах задана явно.
+Працюємо з маленькими таблицями на C#. Спочатку намалюйте комірки на папері, потім відтворіть кроки програмою. Тип ключів і хеш-функцію вказано в кожній вправі; у завданні 13 розглядаємо також від’ємні цілі ключі.
 
-**Усього: 12 завдань із повними реалізаціями та очікуваним виводом.**
+**Усього: 15 завдань із повними реалізаціями та очікуваним виводом.**
 
 > **Запуск реалізацій:** C# 14 / .NET 10. Встановіть .NET 10 SDK. Створіть консольний проєкт через `dotnet new console --framework net10.0`, замініть `Program.cs` одним повним блоком `csharp` і виконайте `dotnet run`. Кожен блок незалежний; класи й методи з інших завдань копіювати не потрібно. Для порожніх результатів у виводі використовуємо `[]`; логічні значення C# друкує як `True` / `False`.
 
@@ -560,6 +560,141 @@ static int CountCollisions(int[] keys, int m)
 2
 0
 0
+```
+
+</details>
+
+## Завдання 13. Адреса для від’ємного ключа
+
+Обчисліть індекс кошика для довільного `int`, зокрема від’ємного, при `capacity > 0`. Результат завжди має належати діапазону `0..capacity - 1`.
+
+**Вимоги:** знайдіть остачу `key % capacity`; якщо вона від’ємна, додайте `capacity`. Не використовуйте `Math.Abs`: для `int.MinValue` додатне значення не вміщується в `int`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+foreach (int key in new[] { 7, -1, -7, 0, int.MinValue })
+    Console.WriteLine(Bucket(key, 5));
+Console.WriteLine(Bucket(-7, 1));
+
+static int Bucket(int key, int capacity)
+{
+    int remainder = key % capacity;
+    return remainder < 0 ? remainder + capacity : remainder;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+2
+4
+3
+0
+2
+0
+```
+
+</details>
+
+## Завдання 14. Вставка після видалення без дублювання ключа
+
+У таблиці з лінійним пробуванням `-1` позначає порожню комірку, `-2` — видалену, решта значень — невід’ємні ключі. Початкова адреса — `key % table.Length`; таблиця непорожня й побудована за цим правилом.
+
+Метод `Insert` повертає `ADDED`, `EXISTS` або `FULL`. Запам’ятайте першу видалену комірку, але продовжуйте пошук: такий самий ключ може стояти далі. Вставляйте в першу видалену комірку або, якщо її немає, у першу порожню. Якщо обійшли всю таблицю, використайте запам’ятану видалену комірку; без неї місця немає.
+
+**Вимоги:** не більше `table.Length` проб; наявний ключ не додавайте повторно й не змінюйте таблицю при `EXISTS` або `FULL`.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+int[] table = { -1, -2, 6, -1, -1 };
+Console.WriteLine(Insert(table, 6));
+Console.WriteLine(Insert(table, 11));
+Console.WriteLine($"[{string.Join(", ", table)}]");
+int[] crowded = { 0, -2, 2 };
+Console.WriteLine(Insert(crowded, 3));
+Console.WriteLine($"[{string.Join(", ", crowded)}]");
+Console.WriteLine(Insert(crowded, 4));
+
+static string Insert(int[] table, int key)
+{
+    int firstDeleted = -1;
+    int index = key % table.Length;
+    for (int probe = 0; probe < table.Length; probe++)
+    {
+        if (table[index] == key) return "EXISTS";
+        if (table[index] == -2 && firstDeleted == -1) firstDeleted = index;
+        if (table[index] == -1)
+        {
+            table[firstDeleted != -1 ? firstDeleted : index] = key;
+            return "ADDED";
+        }
+        index = (index + 1) % table.Length;
+    }
+    if (firstDeleted == -1) return "FULL";
+    table[firstDeleted] = key;
+    return "ADDED";
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+EXISTS
+ADDED
+[-1, 11, 6, -1, -1]
+ADDED
+[0, 3, 2]
+FULL
+```
+
+</details>
+
+## Завдання 15. Пари ключів з однаковим хешем
+
+Для різних невід’ємних ключів порахуйте кількість невпорядкованих пар, які потрапляють у той самий кошик за `key % m`, де `m > 0`. Пара враховується один раз; порядок ключів у парі не важливий.
+
+**Вимоги:** використайте масив кількостей і результат типу `long`, без подвійного перебору ключів. Кожен новий ключ утворює пару з усіма попередніми ключами свого кошика. Три ключі в одному кошику дають три пари, хоча в завданні 12 це лише дві вставки з колізією.
+
+<details>
+<summary>Повна реалізація на C#</summary>
+
+```csharp
+using System;
+
+Console.WriteLine(CollisionPairs(new[] { 1, 6, 11, 2, 7 }, 5));
+Console.WriteLine(CollisionPairs(new[] { 0, 1, 2 }, 5));
+Console.WriteLine(CollisionPairs(Array.Empty<int>(), 5));
+Console.WriteLine(CollisionPairs(new[] { 1, 2, 3, 4 }, 1));
+
+static long CollisionPairs(int[] keys, int m)
+{
+    int[] counts = new int[m];
+    long pairs = 0;
+    foreach (int key in keys)
+    {
+        int bucket = key % m;
+        pairs += counts[bucket];
+        counts[bucket]++;
+    }
+    return pairs;
+}
+```
+
+**Очікуваний вивід:**
+
+```text
+4
+0
+0
+6
 ```
 
 </details>
